@@ -49,6 +49,8 @@ baredom.core.Dom.prototype.removeNode = function (node) {"use strict"; };
  * Move node to new position.
  *
  * @param {number} node
+ * @param {number} parent
+ * @param {number} ref    node before which to put the new one, 0 appends at end
  */
 baredom.core.Dom.prototype.moveNode = function (node, parent, ref) {"use strict"; };
 /**

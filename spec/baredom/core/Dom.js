@@ -114,6 +114,64 @@ function sharedBehaviorForDomOf(domCreator) {
                 expect(c.dom.getText(child3)).toBe(text2);
             });
         });
+        it("can exchange two nodes.", function () {
+            var childNS = "http://child1.com",
+                childLocalName = "c",
+                qname = c.qnames.getQName(childNS, childLocalName),
+                text1 = "hello",
+                child1,
+                child2;
+            child1 = c.dom.insertText(text1, c.documentElement, 0);
+            child2 = c.dom.insertElement(qname, c.documentElement, 0);
+            c.dom.moveNode(child1, c.documentElement, child2);
+            expect(c.dom.getFirstChild(c.documentElement)).toBe(child1);
+            expect(c.dom.getLastChild(c.documentElement)).toBe(child2);
+            c.dom.moveNode(child2, c.documentElement, child1);
+            expect(c.dom.getFirstChild(c.documentElement)).toBe(child2);
+            expect(c.dom.getLastChild(c.documentElement)).toBe(child1);
+        });
+        it("can move a child out of a node.", function () {
+            var childNS = "http://child1.com",
+                childLocalName = "c",
+                qname = c.qnames.getQName(childNS, childLocalName),
+                text1 = "hello",
+                child1,
+                child2;
+            child1 = c.dom.insertElement(qname, c.documentElement, 0);
+            child2 = c.dom.insertText(text1, child1, 0);
+            c.dom.moveNode(child2, c.documentElement, child1);
+            expect(c.dom.getFirstChild(c.documentElement)).toBe(child2);
+            expect(c.dom.getLastChild(c.documentElement)).toBe(child1);
+        });
+        it("can clone a node.", function () {
+            var childNS = "http://child1.com",
+                childLocalName = "c",
+                qname = c.qnames.getQName(childNS, childLocalName),
+                text1 = "hello",
+                child1,
+                child2,
+                child3;
+            child1 = c.dom.insertElement(qname, c.documentElement, 0);
+            c.dom.insertText(text1, child1, 0);
+            child2 = c.dom.cloneNode(child1, c.documentElement, child1);
+            child3 = c.dom.getFirstChild(child2);
+            expect(c.dom.getText(child3)).toBe(text1);
+        });
+        it("cannot add a child to a text.", function () {
+            var childNS = "http://child1.com",
+                childLocalName = "c",
+                qname = c.qnames.getQName(childNS, childLocalName),
+                text1 = "hello",
+                child1,
+                threw;
+            child1 = c.dom.insertText(text1, c.documentElement, 0);
+            try {
+                c.dom.insertElement(qname, child1, 0);
+            } catch (e) {
+                threw = true;
+            }
+            expect(threw).toBe(true);
+        });
         afterEach(function () {
             c = {};
             rootNS = rootLocalName = undefined;

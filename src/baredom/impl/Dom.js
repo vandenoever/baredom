@@ -7,7 +7,8 @@
  */
 baredom.impl.Dom = function (qnames, initialRootQName) {
     "use strict";
-    var /**
+    var self = this,
+        /**
          * Array with nodes. Each node node occupies 8 positions:
          *   value: negative values point to strings, positive ones to qname
          *   parent: position of the parent node, -1 means this node is not a
@@ -395,8 +396,20 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
             assert(p !== node, "Parent is child of node.");
             p = nodes[parent + PARENT];
         }
+        removeFromTree(node);
         insertIntoTree(node, parent, ref);
     };
+    /**
+     * @param {number} fromNode
+     * @param {number} toNode
+     */
+    function cloneChildren(fromNode, toNode) {
+        var c = self.getFirstChild(fromNode);
+        while (c !== 0) {
+            self.cloneNode(c, toNode, 0);
+            c = self.getNextSibling(c);
+        }
+    }
     /**
      * @param {number} node
      * @param {number} parent
@@ -404,7 +417,14 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.cloneNode = function (node, parent, ref) {
-        return 0;
+        var text = self.getText(node),
+            e;
+        if (text !== undefined) {
+            return self.insertText(text, parent, ref);
+        }
+        e = self.insertElement(self.getQName(node), parent, ref);
+        cloneChildren(node, e);
+        return e;
     };
     function init() {
         nodes.length = 2 * NODESSTEP;
