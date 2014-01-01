@@ -204,11 +204,28 @@ function sharedBehaviorForDomOf(domCreator) {
                 qname = c.qnames.getQName(attNS, attLocalName);
             expect(c.dom.getAttributeCount(c.documentElement)).toBe(0);
             c.dom.setAttribute(c.documentElement, qname, attValue);
+            expect(c.dom.getAttributeQName(c.documentElement, 0)).toBe(qname);
+            expect(c.dom.getAttributeValue(c.documentElement, 0)).toBe(attValue);
             expect(c.dom.getAttribute(c.documentElement, qname)).toBe(attValue);
             expect(c.dom.getAttributeCount(c.documentElement)).toBe(1);
             c.dom.setAttribute(c.documentElement, qname, undefined);
             expect(c.dom.getAttribute(c.documentElement, qname)).toBe(undefined);
             expect(c.dom.getAttributeCount(c.documentElement)).toBe(0);
+        });
+        it("can get two attributes set on the document element.", function () {
+            var att1NS = "http://att1.com",
+                att2NS = "http://att2.com",
+                att1LocalName = "att1",
+                att2LocalName = "att2",
+                att1Value = "hello",
+                att2Value = "hi",
+                qname1 = c.qnames.getQName(att1NS, att1LocalName),
+                qname2 = c.qnames.getQName(att2NS, att2LocalName);
+            c.dom.setAttribute(c.documentElement, qname1, att1Value);
+            c.dom.setAttribute(c.documentElement, qname2, att2Value);
+            expect(c.dom.getAttributeCount(c.documentElement)).toBe(2);
+            c.dom.setAttribute(c.documentElement, qname1, undefined);
+            expect(c.dom.getAttributeCount(c.documentElement)).toBe(1);
         });
         afterEach(function () {
             c = {};
