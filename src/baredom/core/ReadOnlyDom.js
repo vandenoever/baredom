@@ -49,14 +49,20 @@ baredom.core.ReadOnlyDom.prototype.getAttributeCount = function (node) {"use str
 baredom.core.ReadOnlyDom.prototype.getAttributeQName = function (node, attr) {"use strict"; };
 /**
  * Get the value of a particular attribute.
- * If the node does not exist, is not an element or does not have the attribute,
- * 0 is returned.
  *
  * @param {number} node
  * @param {number} attr
- * @return {string|undefined}
+ * @return {string}
  */
 baredom.core.ReadOnlyDom.prototype.getAttributeValue = function (node, attr) {"use strict"; };
+/**
+ * Get the value of a particular attribute.
+ *
+ * @param {number} node
+ * @param {number} attrQName
+ * @return {string|undefined}
+ */
+baredom.core.ReadOnlyDom.prototype.getAttribute = function (node, attrQName) {"use strict"; };
 /**
  * Get the number of children of node.
  * If the node does not exist, 0 is returned.

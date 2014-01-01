@@ -62,3 +62,11 @@ baredom.core.Dom.prototype.moveNode = function (node, parent, ref) {"use strict"
  * @return {number}
  */
 baredom.core.Dom.prototype.cloneNode = function (node, parent, ref) {"use strict"; };
+/**
+ * Set attribute.
+ *
+ * @param {number} node
+ * @param {number} attqname qname for the attribute
+ * @param {string} value
+ */
+baredom.core.Dom.prototype.setAttribute = function (node, attqname, value) {"use strict"; };

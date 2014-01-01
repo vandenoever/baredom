@@ -30,9 +30,9 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         LAST = 5,
         ATTS = 6,
         /**
-         * @type{!Array.<number>}
+         * @type{!Array.<Array.<number>>}
          */
-        atts = [],
+        atts = [null],
         /**@type{!Array.<(string|undefined)>}*/
         texts = [];
 
@@ -59,6 +59,22 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
             texts[i] = text;
         }
         return i + 1;
+    }
+
+    /**
+     * @param {number} node
+     * @return {!Array.<number>}
+     */
+    function addAttributes(node) {
+        var i = 1, l = atts.length;
+        while (i < l && atts[l] !== null) {
+            i += 1;
+        }
+        if (i === l) {
+            atts.push([]);
+        }
+        nodes[node + ATTS] = i;
+        return /**@type{!Array.<number>}*/(atts[i]);
     }
 
     /**
@@ -125,34 +141,29 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
 
     /**
      * @param {number} node
-     * @return {number}
+     * @return {Array.<number>}
      */
-    this.getAttributeCount = function (node) {
+    function getAttributes(node) {
         var pos = nodes[node],
-            attCount = 0;
-        if (pos > 1) {
-            attCount = nodes[pos + 1];
+            attpos,
+            a = null;
+        if (pos > 0) {
+            attpos = nodes[node + ATTS];
+            if (attpos) {
+                a = atts[attpos];
+            }
         }
-        return attCount;
-    };
+        return a;
+    }
 
     /**
      * @param {number} node
-     * @param {number} attr
-     * @return {number|undefined}
+     * @return {number}
      */
-    function getAttPos(node, attr) {
-        var pos = nodes[node],
-            attCount = 0,
-            attPos;
-        if (pos > 1) {
-            attCount = nodes[pos + 1];
-            if (attCount > attr) {
-                attPos = pos + 2 + attr * 2;
-            }
-        }
-        return attPos;
-    }
+    this.getAttributeCount = function (node) {
+        var a = getAttributes(node);
+        return a ? a.length / 2 : 0;
+    };
 
     /**
      * @param {number} node
@@ -160,18 +171,71 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getAttributeQName = function (node, attr) {
-        var attPos = getAttPos(node, attr);
-        return (attPos === undefined) ? 0 : nodes[attPos];
+        var a = getAttributes(node);
+        return a[attr * 2];
     };
 
     /**
      * @param {number} node
      * @param {number} attr
-     * @return {string|undefined}
+     * @return {string}
      */
     this.getAttributeValue = function (node, attr) {
-        var attPos = getAttPos(node, attr);
-        return (attPos === undefined) ? undefined : getText(nodes[attPos]);
+        var a = getAttributes(node);
+        return getText(a[attr * 2 + 1]);
+    };
+    /**
+     * @param {number} node
+     * @param {number} attqname qname for the attribute
+     * @return {string|undefined}
+     */
+    this.getAttribute = function (node, attqname) {
+        var a = getAttributes(node), i,
+            l = a ? a.length : 0,
+            v;
+        for (i = 0; i < l && v === undefined; i += 2) {
+            if (a[i] === attqname) {
+                v = getText(a[i + 1]);
+            }
+        }
+        return v;
+    };
+    /**
+     * @param {number} node
+     * @param {number} attqname qname for the attribute
+     * @param {string|undefined} value
+     */
+    this.setAttribute = function (node, attqname, value) {
+        var a = getAttributes(node), i, l;
+        if (a === null) {
+            a = addAttributes(node);
+        }
+        l = a.length;
+        i = 0;
+        while (i < l && a[i] !== attqname) {
+            i += 2;
+        }
+        if (i !== l) {
+            if (value === undefined) {
+                removeText(a[i + 1]);
+                if (i !== l - 2) {
+                    a[i] = a[l - 2];
+                    a[i + 1] = a[l - 1];
+                }
+                a.length = l - 2;
+            } else {
+                setText(a[i + 1], value);
+            }
+        } else { // att is not yet on this element
+            i = 0;
+            while (i < l && a[i] !== 0) {
+                i += 2;
+            }
+            if (i === l && value !== undefined) {
+                a.push(attqname);
+                a.push(addText(value));
+            }
+        }
     };
  
     /**

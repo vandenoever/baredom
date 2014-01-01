@@ -197,6 +197,19 @@ function sharedBehaviorForDomOf(domCreator) {
             c.dom.setQName(child, qname2);
             expect(c.dom.getQName(child)).toBe(qname2);
         });
+        it("can get an attribute set on the document element.", function () {
+            var attNS = "http://att.com",
+                attLocalName = "att",
+                attValue = "hello",
+                qname = c.qnames.getQName(attNS, attLocalName);
+            expect(c.dom.getAttributeCount(c.documentElement)).toBe(0);
+            c.dom.setAttribute(c.documentElement, qname, attValue);
+            expect(c.dom.getAttribute(c.documentElement, qname)).toBe(attValue);
+            expect(c.dom.getAttributeCount(c.documentElement)).toBe(1);
+            c.dom.setAttribute(c.documentElement, qname, undefined);
+            expect(c.dom.getAttribute(c.documentElement, qname)).toBe(undefined);
+            expect(c.dom.getAttributeCount(c.documentElement)).toBe(0);
+        });
         afterEach(function () {
             c = {};
             rootNS = rootLocalName = undefined;
