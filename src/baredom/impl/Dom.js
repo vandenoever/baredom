@@ -21,30 +21,19 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
          */
         nodes = [],
         NODESSTEP = 8,
+        VALUE = 0,
+        PARENT = 1,
+        PREV = 2,
+        NEXT = 3,
+        FIRST = 4,
+        LAST = 5,
+        ATTS = 6,
         /**
          * @type{!Array.<number>}
          */
         atts = [],
         /**@type{!Array.<(string|undefined)>}*/
         texts = [];
-
-    /**
-     * @param {string} text
-     * @return {number}
-     */
-    function addText(text) {
-        var l = texts.length,
-            i = 0;
-        while (i < l && texts[i] === undefined) {
-            i += 1;
-        }
-        if (i === l) {
-            texts.push(text);
-        } else {
-            texts[i] = text;
-        }
-        return i;
-    }
 
     /**
      * @return {number}
@@ -54,12 +43,38 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     };
 
     /**
+     * @param {string} text
+     * @return {number}
+     */
+    function addText(text) {
+        var l = texts.length,
+            i = 0;
+        while (i < l && texts[i] !== undefined) {
+            i += 1;
+        }
+        if (i === l) {
+            texts.push(text);
+        } else {
+            texts[i] = text;
+        }
+        return i + 1;
+    }
+
+    /**
+     * @param {number} position
+     * @param {string} text
+     */
+    function setText(position, text) {
+        texts[position - 1] = text;
+    }
+
+    /**
      * @param {number} position
      * @return {string}
      */
     function getText(position) {
-        var text = texts[position];
-        assert(text !== undefined, "No text as position " + position + ".");
+        var text = texts[position - 1];
+        assert(text !== undefined, "No text at position " + position + ".");
         return /**@type{string}*/(text);
     }
 
@@ -67,7 +82,9 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @param {number} position
      */
     function removeText(position) {
-        texts[position] = undefined;
+        var text = texts[position - 1];
+        assert(text !== undefined, "No text at position " + position + ".");
+        texts[position - 1] = undefined;
     }
 
     /**
@@ -100,7 +117,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         var pos = nodes[node],
             v;
         if (pos < 0) {
-            v = texts[-pos];
+            v = getText(-pos);
         }
         return v;
     };
@@ -212,6 +229,105 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @param {number} qname
      */
     this.setQName = function (node, qname) {
+        var pos = nodes[node];
+        if (pos > 0) {
+            nodes[pos] = qname;
+        }
+    };
+    /**
+     * @param {number} node
+     * @param {string} text
+     */
+    this.setText = function (node, text) {
+        var pos = nodes[node];
+        if (pos < 0) {
+            setText(-pos, text);
+        }
+    };
+    /**
+     * @return {number}
+     */
+    function getEmptyNodePosition() {
+        var l = nodes.length,
+            i = 2 * NODESSTEP;
+        while (i < l && nodes[i + PARENT] !== -1) {
+            i += NODESSTEP;
+        }
+        if (i === l) {
+            nodes.length = i + NODESSTEP;
+        }
+        return i;
+    }
+    /**
+     * @param {number} node
+     * @param {number} parent
+     * @param {number} ref
+     */
+    function insertIntoTree(node, parent, ref) {
+        var next = ref || 0,
+            prev = (next === 0) ? nodes[parent + LAST] : nodes[next + PREV];
+        nodes[node + PARENT] = parent;
+        nodes[node + PREV] = prev;
+        nodes[node + NEXT] = next;
+        // adapt parent
+        if (prev === 0) {
+            nodes[parent + FIRST] = node;
+        }
+        if (next === 0) {
+            nodes[parent + LAST] = node;
+        }
+        // adapt prev node
+        if (prev !== 0) {
+            nodes[prev + NEXT] = node;
+        }
+        // adapt next node
+        if (next !== 0) {
+            nodes[next + PREV] = node;
+        }
+    }
+    /**
+     * @param {number} node
+     */
+    function removeFromTree(node) {
+        var prev = nodes[node + PREV],
+            next = nodes[node + NEXT],
+            parent = nodes[node + PARENT];
+        if (prev !== 0) {
+            nodes[prev + NEXT] = next;
+        }
+        if (next !== 0) {
+            nodes[next + PREV] = prev;
+        }
+        if (nodes[parent + FIRST] === node) {
+            nodes[parent + FIRST] = next;
+        }
+        if (nodes[parent + LAST] === node) {
+            nodes[parent + LAST] = prev;
+        }
+    }
+    /**
+     * @param {number} value
+     * @param {number} parent
+     * @param {number} ref
+     * @return {number}
+     */
+    function createEmptyNode(value, parent, ref) {
+        assert(parent >= NODESSTEP, "Invalid parent.");
+        assert(parent % NODESSTEP === 0, "Invalid parent.");
+        assert(parent === NODESSTEP || nodes[parent + 1] >= NODESSTEP, "Invalid parent.");
+        assert(nodes[parent] > 0, "Parent is not an element.");
+        assert(ref > NODESSTEP || ref === 0, "Invalid reference.");
+        assert(ref % NODESSTEP === 0, "Invalid reference.");
+        assert(ref === 0 || nodes[ref + 1] === parent, "Invalid reference.");
+        var pos = getEmptyNodePosition();
+        // init new node
+        nodes[pos] = value;
+        nodes[pos + FIRST] = 0;
+        nodes[pos + LAST] = 0;
+        nodes[pos + ATTS] = 0;
+        nodes[pos + 7] = 0;
+        insertIntoTree(pos, parent, ref);
+        return pos;
     }
     /**
      * @param {number} qname
@@ -220,30 +336,78 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.insertElement = function (qname, parent, ref) {
-    }
+        var pos = createEmptyNode(qname, parent, ref);
+        return pos;
+    };
     /**
-     * @param {number} text
+     * @param {string} text
      * @param {number} parent
      * @param {number} ref
      * @return {number}
      */
     this.insertText = function (text, parent, ref) {
+        var textPos = addText(text),
+            pos = createEmptyNode(-textPos, parent, ref);
+        return pos;
+    };
+    /**
+     * @param {number} node
+     */
+    function removeChildren(node) {
+        var child = nodes[node + FIRST],
+            pos;
+        while (child !== 0) {
+            removeChildren(child);
+            nodes[node + PARENT] = -1;
+            pos = nodes[node];
+            if (pos < 0) { // text
+                removeText(-pos);
+            }
+            child = nodes[child + NEXT];
+        }
     }
     /**
      * @param {number} node
      */
     this.removeNode = function (node) {
-    }
+        assert(node > NODESSTEP, "Invalid node.");
+        assert(node % NODESSTEP === 0, "Invalid node.");
+        removeChildren(node);
+        removeFromTree(node);
+        var pos = nodes[node];
+        if (pos < 0) { // text
+            removeText(-pos);
+        }
+    };
     /**
      * @param {number} node
      * @param {number} parent
      * @param {number} ref
      */
     this.moveNode = function (node, parent, ref) {
-    }
+        assert(node > NODESSTEP, "Invalid node.");
+        assert(node % NODESSTEP === 0, "Invalid node.");
+        assert(ref === 0 || nodes[ref + PARENT] === parent,
+                "Invalid reference.");
+        // check that parent is not beneath node
+        var p = parent;
+        while (p !== 0) {
+            assert(p !== node, "Parent is child of node.");
+            p = nodes[parent + PARENT];
+        }
+        insertIntoTree(node, parent, ref);
+    };
+    /**
+     * @param {number} node
+     * @param {number} parent
+     * @param {number} ref
+     * @return {number}
+     */
+    this.cloneNode = function (node, parent, ref) {
+        return 0;
+    };
     function init() {
         nodes.length = 2 * NODESSTEP;
-        var pos = NODESSTEP;
         nodes[NODESSTEP] = initialRootQName;
         nodes[NODESSTEP + 1] = 0;
         nodes[NODESSTEP + 2] = 0;

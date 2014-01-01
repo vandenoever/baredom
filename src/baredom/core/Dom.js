@@ -15,6 +15,13 @@ baredom.core.Dom = function () {"use strict"; };
  */
 baredom.core.Dom.prototype.setQName = function (node, qname) {"use strict"; };
 /**
+ * Set the text of a text node.
+ *
+ * @param {number} node
+ * @param {string} text
+ */
+baredom.core.Dom.prototype.setText = function (node, text) {"use strict"; };
+/**
  * Append a new element to another node and return it.
  *
  * @param {number} qname
@@ -26,7 +33,7 @@ baredom.core.Dom.prototype.insertElement = function (qname, parent, ref) {"use s
 /**
  * Append a new text to another node and return it.
  *
- * @param {number} text
+ * @param {string} text
  * @param {number} parent
  * @param {number} ref    node before which to put the new one, 0 appends at end
  * @return {number}
@@ -44,3 +51,12 @@ baredom.core.Dom.prototype.removeNode = function (node) {"use strict"; };
  * @param {number} node
  */
 baredom.core.Dom.prototype.moveNode = function (node, parent, ref) {"use strict"; };
+/**
+ * Clone node to new position.
+ *
+ * @param {number} node
+ * @param {number} parent
+ * @param {number} ref    node before which to put the new one, 0 appends at end
+ * @return {number}
+ */
+baredom.core.Dom.prototype.cloneNode = function (node, parent, ref) {"use strict"; };
