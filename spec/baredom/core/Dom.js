@@ -172,6 +172,31 @@ function sharedBehaviorForDomOf(domCreator) {
             }
             expect(threw).toBe(true);
         });
+        it("can remove a node and its children.", function () {
+            var childNS = "http://child1.com",
+                childLocalName = "c",
+                qname = c.qnames.getQName(childNS, childLocalName),
+                text1 = "hello",
+                child1;
+            child1 = c.dom.insertElement(qname, c.documentElement, 0);
+            c.dom.insertText(text1, child1, 0);
+            c.dom.insertElement(qname, child1, 0);
+            c.dom.removeNode(child1);
+            expect(c.dom.getFirstChild(c.documentElement)).toBe(0);
+            expect(c.dom.getLastChild(c.documentElement)).toBe(0);
+        });
+        it("can change the QName on an element.", function () {
+            var childNS1 = "http://child1.com",
+                childNS2 = "http://child2.com",
+                childLocalName1 = "c",
+                childLocalName2 = "c",
+                qname1 = c.qnames.getQName(childNS1, childLocalName1),
+                qname2 = c.qnames.getQName(childNS2, childLocalName2),
+                child;
+            child = c.dom.insertElement(qname1, c.documentElement, 0);
+            c.dom.setQName(child, qname2);
+            expect(c.dom.getQName(child)).toBe(qname2);
+        });
         afterEach(function () {
             c = {};
             rootNS = rootLocalName = undefined;

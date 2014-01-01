@@ -232,7 +232,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     this.setQName = function (node, qname) {
         var pos = nodes[node];
         if (pos > 0) {
-            nodes[pos] = qname;
+            nodes[node] = qname;
         }
     };
     /**
@@ -359,8 +359,8 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
             pos;
         while (child !== 0) {
             removeChildren(child);
-            nodes[node + PARENT] = -1;
-            pos = nodes[node];
+            nodes[child + PARENT] = -1;
+            pos = nodes[child];
             if (pos < 0) { // text
                 removeText(-pos);
             }
