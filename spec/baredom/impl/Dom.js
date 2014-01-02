@@ -1,4 +1,4 @@
-/*global describe, baredom, expect, it, sharedBehaviorForDomOf*/
+/*global describe, baredom, sharedBehaviorForDomOf*/
 describe("impl/Dom", function () {
     "use strict";
     function domCreator(namespace, localName) {

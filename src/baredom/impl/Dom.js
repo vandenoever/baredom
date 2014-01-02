@@ -62,22 +62,6 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     }
 
     /**
-     * @param {number} node
-     * @return {!Array.<number>}
-     */
-    function addAttributes(node) {
-        var i = 1, l = atts.length;
-        while (i < l && atts[l] !== null) {
-            i += 1;
-        }
-        if (i === l) {
-            atts.push([]);
-        }
-        nodes[node + ATTS] = i;
-        return /**@type{!Array.<number>}*/(atts[i]);
-    }
-
-    /**
      * @param {number} position
      * @param {string} text
      */
@@ -102,6 +86,39 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         var text = texts[position - 1];
         assert(text !== undefined, "No text at position " + position + ".");
         texts[position - 1] = undefined;
+    }
+
+    /**
+     * @param {number} node
+     * @return {!Array.<number>}
+     */
+    function addAttributes(node) {
+        var i = 1, l = atts.length;
+        while (i < l && atts[l] !== null) {
+            i += 1;
+        }
+        if (i === l) {
+            atts.push([]);
+        }
+        nodes[node + ATTS] = i;
+        return /**@type{!Array.<number>}*/(atts[i]);
+    }
+
+    /**
+     * @param {number} node
+     */
+    function removeAttributes(node) {
+        var attpos = nodes[node + ATTS], a, i, l;
+        if (attpos) {
+            a = atts[attpos];
+            l = (a === null) ? 0 : a.length;
+            for (i = 0; i < l; i += 1) {
+                if (a[i] !== 0) {
+                    removeText(a[i + 1]);
+                }
+            }
+            atts[attpos] = null;
+        }
     }
 
     /**
@@ -421,6 +438,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     function removeChildren(node) {
         var child = nodes[node + FIRST],
             pos;
+        removeAttributes(node);
         while (child !== 0) {
             removeChildren(child);
             nodes[child + PARENT] = -1;

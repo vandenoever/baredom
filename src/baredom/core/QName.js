@@ -2,12 +2,16 @@
 /*global baredom*/
 /**
  * Interface to a QName dictionary.
+ * This dictionary maps QNames to numbers and numbers to QNames.
+ * A QName is an optional namespace with a local name. They are used for element
+ * tags and attributes.
+ *
  * @class
  * @interface
  */
 baredom.core.QName = function () {"use strict"; };
 /**
- * Get the QName number of for the namespace and local-name.
+ * Get the QName number for the namespace and local-name.
  * This value is always larger than 0.
  *
  * @param {string|null} ns
