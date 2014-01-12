@@ -1,7 +1,7 @@
-/*global baredom, assert*/
+/*global baredom, assert, ModificationListener*/
 /**
  * @constructor
- * @implements baredom.core.Dom
+ * @implements baredom.core.ObservableDom
  * @param {!baredom.core.QName} qnames
  * @param {number} initialRootQName
  */
@@ -29,12 +29,15 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         FIRST = 4,
         LAST = 5,
         ATTS = 6,
+        VERSION = 7,
         /**
          * @type{!Array.<Array.<number>>}
          */
         atts = [null],
         /**@type{!Array.<(string|undefined)>}*/
-        texts = [];
+        texts = [],
+        /**@type{!Array.<!ModificationListener>}*/
+        modificationListeners = [];
 
     /**
      * @return {number}
@@ -412,6 +415,15 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         return pos;
     }
     /**
+     * @param {!ModificationListener.Type} type
+     * @param {number} node
+     */
+    function signalModification(type, node) {
+        modificationListeners.forEach(function (l) {
+            l.handleEvent(self, type, node);
+        });
+    }
+    /**
      * @param {number} qname
      * @param {number} parent
      * @param {number} ref
@@ -419,6 +431,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      */
     this.insertElement = function (qname, parent, ref) {
         var pos = createEmptyNode(qname, parent, ref);
+        signalModification(ModificationListener.Type.INSERTTEXT, pos);
         return pos;
     };
     /**
@@ -430,6 +443,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     this.insertText = function (text, parent, ref) {
         var textPos = addText(text),
             pos = createEmptyNode(-textPos, parent, ref);
+        signalModification(ModificationListener.Type.INSERTTEXT, pos);
         return pos;
     };
     /**
@@ -461,6 +475,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         if (pos < 0) { // text
             removeText(-pos);
         }
+        signalModification(ModificationListener.Type.REMOVENODE, node);
     };
     /**
      * @param {number} node
@@ -480,6 +495,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         }
         removeFromTree(node);
         insertIntoTree(node, parent, ref);
+        signalModification(ModificationListener.Type.MOVENODE, node);
     };
     /**
      * @param {number} fromNode
@@ -507,6 +523,33 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         e = self.insertElement(self.getQName(node), parent, ref);
         cloneChildren(node, e);
         return e;
+    };
+    /**
+     * @param {number} node
+     * @return {number}
+     */
+    this.getVersion = function (node) {
+        return nodes[node + VERSION] || 0;
+    };
+    /**
+     * @param {ModificationListener} listener
+     * @return {undefined}
+     */
+    this.addModificationListener = function (listener) {
+        var i = modificationListeners.indexOf(listener);
+        if (i === -1) {
+            modificationListeners.push(listener);
+        }
+    };
+    /**
+     * @param {ModificationListener} listener
+     * @return {undefined}
+     */
+    this.removeModificationListener = function (listener) {
+        var i = modificationListeners.indexOf(listener);
+        if (i !== -1) {
+            modificationListeners.splice(i, 1);
+        }
     };
     function init() {
         nodes.length = 2 * NODESSTEP;

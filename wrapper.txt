@@ -1,0 +1,28 @@
+The comparison node1 === node2 only works when they are the same JavaScript object. So it follows that in the DOM model, each node must be represented by 0 or 1 JavaScript objects. In the DOM there are many places from which a node can be linked, such as firstChild, lastChild, previousSibling and nextSibling.
+
+If such a position is accessed for the first time, a JavaScript object representing the node can be created on the fly. If another position that represents the same node is accessed, the same object should be returned. This other object must be found via the other nodes. There can, however, not be a central place from which nodes are linked as this would prevent garbage collection of unused nodes. So each instantiated node must be connected to the other instantiated nodes. The most logical node to link to is the documentElement. Hence, the parentNode of each instantiated node will be instantiated as well.
+
+
+
+Example: in a new document, <r><a/><b/></r>, the property firstChild on documentElement is accessed.
+  var r, a, b1, b2;
+  r = doc.documentElement;
+  a = r.firstChild;
+  b1 = a.nextSibling;
+  b2 = r.lastChild;
+  assert(b1 === b2);
+
+
+Node.prototype = {
+    get parentNode() {
+        this._parentNode;
+    };
+};
+
+Once the node has been created, it will exist until no more references to it exists.
+
+
+Processing updates from the underlying DOM
+
+Consider the following scenario. 
+

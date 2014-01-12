@@ -111,3 +111,12 @@ baredom.core.ReadOnlyDom.prototype.getFirstChild = function (node) {"use strict"
  * @return {number}
  */
 baredom.core.ReadOnlyDom.prototype.getLastChild = function (node) {"use strict"; };
+/**
+ * Get the version number of the node.
+ * TODO: specify what make the version change.
+ * If the node does not exist, 0 is returned.
+ *
+ * @param {number} node
+ * @return {number}
+ */
+baredom.core.ReadOnlyDom.prototype.getVersion = function (node) {"use strict"; };
