@@ -23,30 +23,86 @@ baredom.impl.w3c.Node = function Node(nodeid, owner) {
 baredom.impl.w3c.Node.prototype = {
     get firstChild() {
         "use strict";
-        var doc = this.ownerDocument, childid;
-        if (this.impl_firstChild === undefined) {
-            childid = doc.impl_dom.getFirstChild(this.impl_nodeid);
-            this.impl_firstChild = doc.impl_getNode(childid);
+        var n, doc,
+            nodeid = this.impl_nodeid;
+        if (nodeid === 0) {
+            n = this.impl_firstChild;
+        } else {
+            doc = this.ownerDocument;
+            n = doc.impl_getNode(doc.impl_dom.getFirstChild(nodeid));
         }
-        return this.impl_firstChild;
+        return n;
     },
+    /**@param {baredom.impl.w3c.Node} value*/
     set firstChild(value) {
         "use strict";
         throw "";
     },
     get lastChild() {
         "use strict";
-        return this.impl_lastChild;
+        var n, doc,
+            nodeid = this.impl_nodeid;
+        if (nodeid === 0) {
+            n = this.impl_lastChild;
+        } else {
+            doc = this.ownerDocument;
+            n = doc.impl_getNode(doc.impl_dom.getLastChild(nodeid));
+        }
+        return n;
     },
+    /**@param {baredom.impl.w3c.Node} value*/
     set lastChild(value) {
         "use strict";
         throw "";
     },
     get nextSibling() {
         "use strict";
-        return null;
+        var n, doc,
+            nodeid = this.impl_nodeid;
+        if (nodeid === 0) {
+            n = this.impl_nextSibling;
+        } else {
+            doc = this.ownerDocument;
+            n = doc.impl_getNode(doc.impl_dom.getNextSibling(nodeid));
+        }
+        return n;
     },
+    /**@param {baredom.impl.w3c.Node} value*/
     set nextSibling(value) {
+        "use strict";
+        throw "";
+    },
+    get previousSibling() {
+        "use strict";
+        var n, doc,
+            nodeid = this.impl_nodeid;
+        if (nodeid === 0) {
+            n = this.impl_previousSibling;
+        } else {
+            doc = this.ownerDocument;
+            n = doc.impl_getNode(doc.impl_dom.getPreviousSibling(nodeid));
+        }
+        return n;
+    },
+    /**@param {baredom.impl.w3c.Node} value*/
+    set previousSibling(value) {
+        "use strict";
+        throw "";
+    },
+    get parentNode() {
+        "use strict";
+        var n, doc,
+            nodeid = this.impl_nodeid;
+        if (nodeid === 0) {
+            n = this.impl_parentNode;
+        } else {
+            doc = this.ownerDocument;
+            n = doc.impl_getNode(doc.impl_dom.getParentNode(nodeid));
+        }
+        return n;
+    },
+    /**@param {baredom.impl.w3c.Node} value*/
+    set parentNode(value) {
         "use strict";
         throw "";
     },
@@ -89,14 +145,6 @@ baredom.impl.w3c.Node.prototype.nodeType;
  * @type {baredom.impl.w3c.Document}
  */
 baredom.impl.w3c.Node.prototype.ownerDocument;
-/**
- * @type {Node}
- */
-baredom.impl.w3c.Node.prototype.parentNode;
-/**
- * @type {Node?}
- */
-baredom.impl.w3c.Node.prototype.previousSibling;
 /**
  * @param {Node} newChild
  * @return {Node}
@@ -148,5 +196,9 @@ baredom.impl.w3c.Node.prototype.impl_previousSibling;
  * @type {baredom.impl.w3c.Node|undefined}
  */
 baredom.impl.w3c.Node.prototype.impl_nextSibling;
+/**
+ * @type {baredom.impl.w3c.Node|undefined}
+ */
+baredom.impl.w3c.Node.prototype.impl_parentNode;
 Object.freeze(baredom.impl.w3c.Node);
 Object.freeze(baredom.impl.w3c.Node.prototype);

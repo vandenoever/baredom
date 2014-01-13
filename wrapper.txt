@@ -24,5 +24,20 @@ Once the node has been created, it will exist until no more references to it exi
 
 Processing updates from the underlying DOM
 
-Consider the following scenario. 
+When the underlying DOM is modified, these changes should be reflected in the wrapper. Some properties can be evaluated lazily, others, need to be evaluated actively. When nodes that can have children are added or removed from the document, this affects what nodes are present in the wrapper. These changes should be passed on.
+
+For example, an element is removed from the VDOM. The corresponding element from the WDOM should then also be removed.
+
+
+
+about to remove node
+
+each instantiated node should be made real completely
+
+
+
+
+
+
+
 

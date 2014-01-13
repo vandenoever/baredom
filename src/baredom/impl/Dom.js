@@ -415,12 +415,11 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         return pos;
     }
     /**
-     * @param {!ModificationListener.Type} type
      * @param {number} node
      */
-    function signalModification(type, node) {
+    function signalAboutToRemoveNode(node) {
         modificationListeners.forEach(function (l) {
-            l.handleEvent(self, type, node);
+            l.aboutToRemoveNode(self, node);
         });
     }
     /**
@@ -431,7 +430,6 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      */
     this.insertElement = function (qname, parent, ref) {
         var pos = createEmptyNode(qname, parent, ref);
-        signalModification(ModificationListener.Type.INSERTTEXT, pos);
         return pos;
     };
     /**
@@ -443,7 +441,6 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     this.insertText = function (text, parent, ref) {
         var textPos = addText(text),
             pos = createEmptyNode(-textPos, parent, ref);
-        signalModification(ModificationListener.Type.INSERTTEXT, pos);
         return pos;
     };
     /**
@@ -469,13 +466,13 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
     this.removeNode = function (node) {
         assert(node > NODESSTEP, "Invalid node.");
         assert(node % NODESSTEP === 0, "Invalid node.");
+        signalAboutToRemoveNode(node);
         removeChildren(node);
-        removeFromTree(node);
         var pos = nodes[node];
+        removeFromTree(node);
         if (pos < 0) { // text
             removeText(-pos);
         }
-        signalModification(ModificationListener.Type.REMOVENODE, node);
     };
     /**
      * @param {number} node
@@ -495,7 +492,6 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         }
         removeFromTree(node);
         insertIntoTree(node, parent, ref);
-        signalModification(ModificationListener.Type.MOVENODE, node);
     };
     /**
      * @param {number} fromNode

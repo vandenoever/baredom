@@ -28,6 +28,13 @@ describe("impl/w3c/Dom", function () {
             child = dom.insertElement(qname, documentElement, 0);
             expect(dom.getFirstChild(documentElement)).toBe(child);
             expect(root.firstChild).not.toBe(null);
+            expect(root.firstChild).not.toBe(undefined);
+            expect(root.firstChild).toBe(root.lastChild);
+        });
+        it("from doc to dom.", function () {
+            var root = doc.documentElement;
+            expect(root).not.toBe(null);
+            
         });
     });
     describe("has attributes", function () {

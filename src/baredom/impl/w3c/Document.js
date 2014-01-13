@@ -70,87 +70,36 @@ baredom.impl.w3c.Document.prototype.getElementsByTagName = function (name) {
 };
 /**
  * @param {!baredom.core.Dom} dom
- * @param {!ModificationListener.Type} type
  * @param {number} node
  * @return {undefined}
  */
-baredom.impl.w3c.Document.prototype.handleEvent = function (dom, type, node) {
+baredom.impl.w3c.Document.prototype.aboutToRemoveNode = function (dom, node) {
     "use strict";
-    var self = this;
-    /**
-     * @param {!baredom.impl.w3c.Node} node
-     */
-    function removeNode(node) {
-        var prev = node.impl_previousSibling,
-            next = node.impl_nextSibling;
-        if (prev) {
-            prev.impl_nextSibling = next;
-        }
-        if (next) {
-            next.impl_previousSibling = prev;
-        }
-    }
-    /**
-     * @param {!baredom.impl.w3c.Node} node
-     * @param {!baredom.impl.w3c.Node} parentNode
-     */
-    function insertNode(node, parentNode) {
-    }
-    /**
-     * @param {!baredom.impl.w3c.Node} parentNode
-     */
-    function insertNewNode(parentNode) {
-        var n, text = dom.getText(node);
-        if (text === undefined) {
-            n = new baredom.impl.w3c.Element(node, self);
-        } else {
-            n = new baredom.impl.w3c.Text(node, self);
-        }
-        self.impl_idToNodeMap[node] = n;
-        insertNode(n, parentNode);
-console.log("text " + text);
-    }
+    var map = this.impl_idToNodeMap;
     /**
      * @param {number} nodeid
-     * @return {!baredom.impl.w3c.Node}
+     * @param {baredom.impl.w3c.Node} node
+     * @param {baredom.impl.w3c.Node} parent
      */
-    function getParentNode(nodeid) {
-        var parentId = dom.getParentNode(nodeid),
-            parentNode = self.impl_idToNodeMap[parentId];
-        if (parentNode === undefined) {
-            parentNode = new baredom.impl.w3c.Element(parentId, self);
-            insertNode(parentNode, getParentNode(parentId));
-            self.impl_idToNodeMap[parentId] = parentNode;
+    function removeNode(nodeid, node, parent) {
+        var c;
+        node.impl_firstChild = node.firstChild;
+        node.impl_lastChild = node.lastChild;
+        node.impl_parentNode = parent;
+        if (parent) {
+            node.impl_previousSibling = node.previousSibling;
+            node.impl_nextSibling = node.nextSibling;
         }
-        return parentNode;
-    }
-    function handle() {
-        assert(dom === self.impl_dom, "reporting to wrong document.");
-        var parentId, parentNode, n;
-        if (type === ModificationListener.Type.INSERTELEMENT
-                || type === ModificationListener.Type.INSERTTEXT) {
-//only add node if any if is first or last in parent or if one of the neighbors 
-            parentId = dom.getParentNode(node);
-            parentNode = self.impl_idToNodeMap[parentId];
-            if (parentNode !== undefined && parentNode.impl_firstChild) {
-                insertNewNode(parentNode);
-            }
-        } else if (type === ModificationListener.Type.REMOVENODE) {
-            n = self.impl_idToNodeMap[node];
-            if (n !== undefined) {
-                removeNode(n);
-                delete self.impl_idToNodeMap[node];
-            }
-        } else if (type === ModificationListener.Type.MOVENODE) {
-            n = self.impl_idToNodeMap[node];
-            if (n !== undefined) {
-                removeNode(n);
-                parentNode = getParentNode(node);
-                insertNode(n, parentNode);
-            }
+        // TODO: attributes and text
+        node.impl_nodeid = 0;
+        delete map[nodeid];
+        c = node.impl_firstChild;
+        while (c) {
+            removeNode(c.impl_nodeid, c, node);
+            c = c.impl_nextSibling;
         }
     }
-    handle();
+    removeNode(node, this.impl_getNode(node), null);
 };
 /**
  * @param {!baredom.impl.w3c.Node} node
@@ -169,7 +118,17 @@ baredom.impl.w3c.Document.prototype.impl_getNode = function (node) {
     if (node === 0) {
         return null;
     }
-    var n = this.impl_idToNodeMap[node];
+    var n = this.impl_idToNodeMap[node],
+        text;
+    if (n === undefined) {
+        text = this.impl_dom.getText(node);
+        if (text === undefined) {
+            n = new baredom.impl.w3c.Element(node, this);
+        } else {
+            n = new baredom.impl.w3c.Text(node, this);
+        }
+        this.impl_idToNodeMap[node] = n;
+    }
     return n;
 };
 /**
