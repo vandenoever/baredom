@@ -1,0 +1,19 @@
+The bridge with the current baredom.impl.dom can render like this. There are two arrays with the dom node connectivity numbers. There is another array which has a pointer to a live Node in the old situation.
+1) Go through the two arrays simultaneously and compare all node properties except for children. If the Node type or QName is different, create a new Node there and put it in the array of live Nodes. The old node is lost now (perhaps it can go in a cache and be reused). This step might be faster if we do:
+  1a) collect all redundant nodes in a cache
+  1b) put the nodes back where applicable or create new ones
+  1c) flush the cache
+2) Go through the two arrays from root through to all children and move around nodes that are in the wrong position. We just look at parent en previousSibling and call insertBefore() to update if needed.
+
+
+http://stackoverflow.com/questions/16071211/using-transferable-objects-from-a-web-worker
+
+send:
+self.postMessage(arr.buffer, [arr.buffer]);
+
+receive:
+theWorker.addEventListener('message', function(ev) {
+    var arr = new Float64Array(ev.data);  // just cast it to the desired type - no copy made
+    // ...
+});
+
