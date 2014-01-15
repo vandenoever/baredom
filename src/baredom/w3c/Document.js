@@ -1,5 +1,4 @@
 /*jslint emptyblock: true, unparam: true*/
-/*global baredom*/
 /**
  * @interface
  * @extends {Node}
@@ -37,13 +36,16 @@ Document.prototype.createCDATASection = function (data) {"use strict"; };
  */
 Document.prototype.createDocumentFragment = function () {"use strict"; };
 /**
- * Create a DOM element. Surprisingly, this has side-effects on IE
- * (creating and element with a custom tag boots up a sub-system that
- * handles custom tags).
  * @param {string} tagName
  * @return {!Element}
  */
 Document.prototype.createElement = function (tagName) {"use strict"; };
+/**
+ * @param {string} namespaceURI
+ * @param {string} qualifiedName
+ * @return {!Element}
+ */
+Document.prototype.createElementNS = function (namespaceURI, qualifiedName) {"use strict"; };
 /**
  * @param {string} name
  * @return {!EntityReference}

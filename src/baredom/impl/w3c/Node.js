@@ -177,6 +177,14 @@ baredom.impl.w3c.Node.prototype.removeChild = function (oldChild) {"use strict";
  */
 baredom.impl.w3c.Node.prototype.replaceChild = function (newChild, oldChild) {"use strict"; };
 /**
+ * @type {string}
+ */
+baredom.impl.w3c.Node.prototype.namespaceURI;
+/**
+ * @type {string}
+ */
+baredom.impl.w3c.Node.prototype.localName;
+/**
  * @type {number}
  */
 baredom.impl.w3c.Node.prototype.impl_nodeid;

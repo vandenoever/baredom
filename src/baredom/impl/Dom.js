@@ -8,6 +8,7 @@
 baredom.impl.Dom = function (qnames, initialRootQName) {
     "use strict";
     var self = this,
+        eventProxy = new baredom.impl.EventProxy(this),
         /**
          * Array with nodes. Each node node occupies 8 positions:
          *   value: negative values point to strings, positive ones to qname
@@ -473,6 +474,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         if (pos < 0) { // text
             removeText(-pos);
         }
+        nodes[node + PARENT] = -1;
     };
     /**
      * @param {number} node
@@ -488,7 +490,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         var p = parent;
         while (p !== 0) {
             assert(p !== node, "Parent is child of node.");
-            p = nodes[parent + PARENT];
+            p = nodes[p + PARENT];
         }
         removeFromTree(node);
         insertIntoTree(node, parent, ref);
@@ -546,6 +548,26 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         if (i !== -1) {
             modificationListeners.splice(i, 1);
         }
+    };
+    /**
+     * @param {number} nodeid
+     * @param {string} eventType
+     * @param {function()} handler
+     */
+    this.addEventListener = function (nodeid, eventType, handler) {
+        eventProxy.addEventListener(nodeid, eventType, handler);
+    };
+    /**
+     * @return {!Array.<number>}
+     */
+    this.getNodesArray = function () {
+        return nodes;
+    };
+    /**
+     * @return {!baredom.impl.EventProxy}
+     */
+    this.getEventProxy = function () {
+        return eventProxy;
     };
     function init() {
         nodes.length = 2 * NODESSTEP;

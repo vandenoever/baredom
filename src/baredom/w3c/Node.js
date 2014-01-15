@@ -50,6 +50,14 @@ Node.prototype.parentNode;
  */
 Node.prototype.previousSibling;
 /**
+ * @type {string}
+ */
+Node.prototype.namespaceURI;
+/**
+ * @type {string}
+ */
+Node.prototype.localName;
+/**
  * @param {Node} newChild
  * @return {Node}
  */

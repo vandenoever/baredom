@@ -57,6 +57,7 @@ baredom.core.ReadOnlyDom.prototype.getAttributeQName = function (node, attr) {"u
 baredom.core.ReadOnlyDom.prototype.getAttributeValue = function (node, attr) {"use strict"; };
 /**
  * Get the value of a particular attribute.
+ * If there is no attribute for the given QName, undefined is returned.
  *
  * @param {number} node
  * @param {number} attrQName

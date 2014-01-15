@@ -2,5 +2,6 @@
 /*global baredom*/
 /**
  * @interface
+ * @extends {Node}
  */
-function EntityReference() {"use strict"; }
+function Text() {"use strict"; }

@@ -3,4 +3,4 @@
 /**
  * @interface
  */
-function Text() {"use strict"; }
+function EntityReference() {"use strict"; }

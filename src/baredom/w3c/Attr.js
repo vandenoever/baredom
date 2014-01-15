@@ -2,6 +2,7 @@
 /*global baredom*/
 /**
  * @interface
+ * @extends {Node}
  */
 function Attr() {"use strict"; }
 /**

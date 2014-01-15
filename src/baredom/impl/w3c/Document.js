@@ -52,6 +52,10 @@ baredom.impl.w3c.Document.prototype.createElement = function (name) {
     "use strict";
     throw "TODO";
 };
+baredom.impl.w3c.Document.prototype.createElementNS = function (namespaceURI, qualifiedName) {
+    "use strict";
+    throw "TODO";
+};
 baredom.impl.w3c.Document.prototype.createEntityReference = function (name) {
     "use strict";
     throw "TODO";
