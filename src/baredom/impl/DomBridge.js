@@ -22,7 +22,10 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         LAST = 5,
         ATTS = 6,
         VERSION = 7,
-        eventProxy = dom.getEventProxy();
+        eventProxy = dom.getEventProxy(),
+        stringStore = dom.getStringStore(),
+        attStore = dom.getAttributesStore();
+    shadow[NODESSTEP + ATTS] = attStore.addEmptyAttributes();
     /**
      * @return {!baredom.core.Dom}
      */
@@ -49,9 +52,11 @@ baredom.impl.DomBridge = function (dom, documentElement) {
             shadowValue = shadow[i + VALUE];
             value = vdom[i + VALUE];
             if (shadowValue < 0 && value > 0) {
+                stringStore.removeString(-shadowValue);
                 textCache.push(liveNodes[j]);
                 liveNodes[j] = null;
             } else if (shadowValue > 0 && shadowValue !== value) {
+                attStore.removeAttributes(shadow[i + ATTS]);
                 earray = elementCache[shadowValue];
                 if (earray === undefined) {
                     earray = elementCache[shadowValue] = [];
@@ -90,6 +95,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
                     texts -= 1;
                 } else {
                     node = doc.createTextNode(dom.getText(i) || "");
+                    stringStore.addStringId(-value);
                     shadow[i + VALUE] = value;
                 }
                 liveNodes[j] = node;
@@ -101,6 +107,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
                     node = doc.createElementNS(qnames.getNamespace(value),
                             qnames.getLocalName(value));
                     shadow[i + VALUE] = value;
+                    shadow[i + ATTS] = attStore.addEmptyAttributes();
                 }
                 liveNodes[j] = node;
             }
@@ -110,9 +117,10 @@ baredom.impl.DomBridge = function (dom, documentElement) {
      * @param {number} nodeid
      * @param {!Element} element
      */
-    function updateAttributes(nodeid, element) {
+    function updateAllAttributes(nodeid, element) {
         // stupid implementation updates all attributes
-        var atts = element.attributes, value, i, l, qname, a, toRemove = [];
+        var atts, value, i, l, qname, a, toRemove = [];
+        atts = element.attributes;
         l = atts.length;
         for (i = 0; i < l; i += 1) {
             a = atts.item(i);
@@ -134,32 +142,53 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         }
     }
     /**
+     * @param {!Array.<number>} vdom
+     * @param {number} nodeid
+     * @param {!Element} element
+     */
+    function updateAttributes(vdom, nodeid, element) {
+        var pos = nodeid + ATTS,
+            newAtts = vdom[pos],
+            oldAtts = shadow[pos];
+        if (newAtts !== oldAtts) {
+                attStore.removeAttributes(oldAtts);
+            attStore.addAttributes(newAtts);
+            shadow[pos] = newAtts;
+            updateAllAttributes(nodeid, element);
+        }
+    }
+    /**
      * @param {number} parent
      * @param {!Element} parentNode
      * @param {!Array.<number>} vdom
      */
-    function updateNode(parent, parentNode, vdom) {
+    function updateElement(parent, parentNode, vdom) {
         var child = vdom[parent + LAST],
             value,
             childNode,
             nextChild = null,
+            oldValue,
             text;
-        updateAttributes(parent, parentNode);
+        updateAttributes(vdom, parent, parentNode);
         while (child !== 0) {
             childNode = liveNodes[child / NODESSTEP];
             value = vdom[child + VALUE];
             if (value > 0) {
-                updateNode(child, /**@type{!Element}*/(childNode), vdom);
+                updateElement(child, /**@type{!Element}*/(childNode), vdom);
             } else {
-                text = dom.getText(child);
-                childNode.data = text;
-                shadow[child + VALUE] = value;
+                // value points to text
+                oldValue = shadow[child + VALUE];
+                if (oldValue !== value) {
+                    text = dom.getText(child);
+                    shadow[child + VALUE] = -stringStore.updateString(oldValue, text);
+                    childNode.data = text;
+                }
             }
             parentNode.insertBefore(childNode, nextChild);
             nextChild = childNode;
             child = vdom[child + PREV];
         }
-        while (parentNode.firstChild !== nextChild) {
+        while (parentNode.firstChild && parentNode.firstChild !== nextChild) {
             parentNode.removeChild(parentNode.firstChild);
         }
     }
@@ -188,7 +217,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
             vdom = dom.getNodesArray();
         removeUnused(vdom, textCache, elementCache);
         createNew(vdom, textCache, elementCache);
-        updateNode(dom.getDocumentElement(), documentElement, vdom);
+        updateElement(dom.getDocumentElement(), documentElement, vdom);
         updateEventListening();
     };
 };

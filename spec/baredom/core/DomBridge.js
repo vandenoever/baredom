@@ -1,4 +1,4 @@
-/*global describe, beforeEach, afterEach, it, expect, baredom, Element*/
+/*global describe, beforeEach, afterEach, it, expect, baredom, Node*/
 function sharedBehaviorForDomBridgeOf(domBridgeCreator) {
     "use strict";
     describe("A DOM bridge", function () {
@@ -17,7 +17,7 @@ function sharedBehaviorForDomBridgeOf(domBridgeCreator) {
         });
         it("has a real document element", function () {
             expect(c.root).not.toBe(null);
-            expect(c.root instanceof Element).toBe(true);
+            expect(c.root.nodeType).toBe(1);
             expect(c.root.namespaceURI).toBe(rootNS);
             expect(c.root.localName).toBe(rootLocalName);
         });

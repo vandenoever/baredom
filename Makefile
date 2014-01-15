@@ -16,12 +16,16 @@ JS =  src/packages.js \
     src/baredom/w3c/Text.js \
     src/baredom/w3c/Event.js \
     src/baredom/core/QName.js \
+    src/baredom/core/StringStore.js \
+    src/baredom/core/AttributesStore.js \
     src/baredom/core/ReadOnlyDom.js \
     src/baredom/core/Dom.js \
     src/baredom/core/ObservableDom.js \
     src/baredom/core/EventTargetDom.js \
     src/baredom/core/DomBridge.js \
     src/baredom/impl/EventProxy.js \
+    src/baredom/impl/StringStore.js \
+    src/baredom/impl/AttributesStore.js \
     src/baredom/impl/Dom.js \
     src/baredom/impl/DomBridge.js \
     src/baredom/impl/QName.js \

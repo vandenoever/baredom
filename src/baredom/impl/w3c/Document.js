@@ -54,7 +54,7 @@ baredom.impl.w3c.Document.prototype.createElement = function (name) {
 };
 baredom.impl.w3c.Document.prototype.createElementNS = function (namespaceURI, qualifiedName) {
     "use strict";
-    throw "TODO";
+    return new baredom.impl.w3c.Element(0, this);
 };
 baredom.impl.w3c.Document.prototype.createEntityReference = function (name) {
     "use strict";
@@ -66,7 +66,7 @@ baredom.impl.w3c.Document.prototype.createProcessingInstruction = function (name
 };
 baredom.impl.w3c.Document.prototype.createTextNode = function (name) {
     "use strict";
-    throw "TODO";
+    return new baredom.impl.w3c.Text(0, this);
 };
 baredom.impl.w3c.Document.prototype.getElementsByTagName = function (name) {
     "use strict";
