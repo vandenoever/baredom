@@ -16,67 +16,44 @@ triggerinterval: ms between trigger calls
 renderinterval: if applicable, this 
 **/
 
-// trigger for modifying the bare dom
-/**
- * @param {!Element} div
- */
-function baredomSetup(div, loops, change) {
+function baredomInitialize(state) {
     "use strict";
-    var qnames = new baredom.impl.QName(),
-        qname = qnames.getQName(document.body.namespaceURI, "div"),
-        vdom = new baredom.impl.Dom(qnames, qname),
-        bridge = new baredom.impl.DomBridge(vdom, div);
-    return {bridge: bridge, nodes: [], divQName: qname, loops: loops, change: change};
+    var vdom = state.bridge.getVirtualDom(),
+        root = vdom.getDocumentElement(),
+        nodes = state.nodes,
+        qname = state.divQName,
+        loops = state.loops,
+        i,
+        r;
+    for (i = 0; i < loops; i += 1) {
+        r = Math.random();
+        if (i % 5) {
+            nodes[i] = vdom.insertText(r + " ", root, 0);
+        } else {
+            nodes[i] = vdom.insertElement(qname, root, 0);
+        }
+    }
 }
-/**
- * @param {!Element} div
- */
-function w3baredomSetup(div, loops, change) {
+function domInitialize(state) {
     "use strict";
-    var bridge = baredomSetup(div).bridge,
-        doc = new baredom.impl.w3c.Document(bridge.getVirtualDom()),
-        documentElement = doc.documentElement;
-    return {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
-}
-/**
- * @param {!Element} div
- */
-function domSetup(div, loops, change) {
-    "use strict";
-    return {root: div, loops: loops, change: change, nodes: []};
-}
-/**
- * @param {!Element} div
- */
-function cloneSetup(div, loops, change) {
-    "use strict";
-    return {root: div.cloneNode(true), loops: loops, change: change, nodes: [], live: div};
-}
-/**
- * @param {!Element} div
- */
-function importSetup(div, loops, change) {
-    "use strict";
-    var ns = div.namespaceURI,
-        doc = div.ownerDocument.implementation.createDocument(ns, "", div.ownerDocument.docType),
-        root = doc.createElementNS(div.namespaceURI, div.localName);
-    return {root: root, loops: loops, change: change, nodes: [], live: div};
-}
-function simpleSetup(div, loops, change) {
-    "use strict";
-    var root = new Simple(div);
-    return {root: root.documentElement, loops: loops, change: change, nodes: []};
-}
-function dummySetup(div, loops, change) {
-    "use strict";
-    var root = {};
-    root.createTextNode = function () { return root; };
-    root.createElementNS = function () { return root; };
-    root.removeChild = function () {};
-    root.insertBefore = function () {};
-    root.parentNode = root;
-    root.ownerDocument = root || div;
-    return {root: root, loops: loops, change: change, nodes: []};
+    var root = state.root,
+        ns = root.namespaceURI,
+        doc = root.ownerDocument,
+        nodes = state.nodes,
+        loops = state.loops,
+        i,
+        n,
+        r;
+    for (i = 0; i < loops; i += 1) {
+        r = Math.random();
+        if (i % 5) {
+            n = doc.createTextNode(r + " ");
+        } else {
+            n = doc.createElementNS(ns, "div");
+        }
+        nodes[i] = n;
+        root.appendChild(n);
+    }
 }
 function baredomTrigger(state) {
     "use strict";
@@ -142,6 +119,80 @@ function detachedDomTrigger(state) {
     domTrigger(state);
     parent.insertBefore(root, next);
 }
+// trigger for modifying the bare dom
+/**
+ * @param {!Element} div
+ */
+function baredomSetup(div, loops, change) {
+    "use strict";
+    var qnames = new baredom.impl.QName(),
+        qname = qnames.getQName(document.body.namespaceURI, "div"),
+        vdom = new baredom.impl.Dom(qnames, qname),
+        bridge = new baredom.impl.DomBridge(vdom, div),
+        state = {bridge: bridge, nodes: [], divQName: qname, loops: loops, change: change};
+    baredomInitialize(state);
+    return state;
+}
+/**
+ * @param {!Element} div
+ */
+function w3baredomSetup(div, loops, change) {
+    "use strict";
+    var bridge = baredomSetup(div).bridge,
+        doc = new baredom.impl.w3c.Document(bridge.getVirtualDom()),
+        documentElement = doc.documentElement,
+        state = {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
+    baredomInitialize(state);
+    return state;
+}
+/**
+ * @param {!Element} div
+ */
+function domSetup(div, loops, change) {
+    "use strict";
+    var state = {root: div, loops: loops, change: change, nodes: []};
+    domInitialize(state);
+    return state;
+}
+/**
+ * @param {!Element} div
+ */
+function cloneSetup(div, loops, change) {
+    "use strict";
+    var state = {root: div.cloneNode(true), loops: loops, change: change, nodes: [], live: div};
+    domInitialize(state);
+    return state;
+}
+/**
+ * @param {!Element} div
+ */
+function importSetup(div, loops, change) {
+    "use strict";
+    var ns = div.namespaceURI,
+        doc = div.ownerDocument.implementation.createDocument(ns, "", div.ownerDocument.docType),
+        root = doc.createElementNS(div.namespaceURI, div.localName),
+        state = {root: root, loops: loops, change: change, nodes: [], live: div};
+    domInitialize(state);
+    return state;
+}
+function simpleSetup(div, loops, change) {
+    "use strict";
+    var root = new Simple(div),
+        state = {root: root.documentElement, loops: loops, change: change, nodes: []};
+    domInitialize(state);
+    return state;
+}
+function dummySetup(div, loops, change) {
+    "use strict";
+    var root = {};
+    root.createTextNode = function () { return root; };
+    root.createElementNS = function () { return root; };
+    root.removeChild = function () {};
+    root.insertBefore = function () {};
+    root.parentNode = root;
+    root.ownerDocument = root || div;
+    return {root: root, loops: loops, change: change, nodes: []};
+}
 function baredomRender(state) {
     "use strict";
     state.bridge.render();
@@ -177,10 +228,13 @@ function setupForm(body, options) {
         renderInterval,
         animationFrame,
         infoDiv = document.createElement("div");
+    options.loops = options.loops || 2000;
+    options.change = options.change || 10;
     infoDiv.appendChild(document.createTextNode(""));
     function updateInfo() {
         var duration = new Date().getTime() - runStart;
-        infoDiv.firstChild.data = "trigger: "
+        infoDiv.firstChild.data = "nodes: " + options.loops + ", % change: "
+            + options.change + ", trigger: "
             + Math.round(triggerCallDuration / triggerCalls) + " ms, render: "
             + Math.round(renderCallDuration / renderCalls) + " ms, "
             + Math.round(100 * (triggerCallDuration + renderCallDuration) / duration) + "% cpu, "

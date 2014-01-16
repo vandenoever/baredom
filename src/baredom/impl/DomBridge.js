@@ -214,10 +214,18 @@ baredom.impl.DomBridge = function (dom, documentElement) {
     this.render = function () {
         var textCache = [],
             elementCache = {},
-            vdom = dom.getNodesArray();
+            vdom = dom.getNodesArray(),
+            parent = documentElement.parentNode,
+            next = documentElement.nextSibling;
+        if (parent) {
+            parent.removeChild(documentElement);
+        }
         removeUnused(vdom, textCache, elementCache);
         createNew(vdom, textCache, elementCache);
         updateElement(dom.getDocumentElement(), documentElement, vdom);
+        if (parent) {
+            parent.insertBefore(documentElement, next);
+        }
         updateEventListening();
     };
 };
