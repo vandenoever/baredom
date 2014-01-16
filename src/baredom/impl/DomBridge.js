@@ -180,7 +180,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
                 oldValue = shadow[child + VALUE];
                 if (oldValue !== value) {
                     text = dom.getText(child);
-                    shadow[child + VALUE] = -stringStore.updateString(oldValue, text);
+                    shadow[child + VALUE] = -stringStore.updateString(oldValue, /**@type{string}*/(text));
                     childNode.data = text;
                 }
             }

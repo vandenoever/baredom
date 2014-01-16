@@ -33,6 +33,8 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         VERSION = 7,
         texts = new baredom.impl.StringStore(),
         atts = new baredom.impl.AttributesStore(texts),
+        /**@type{!Array.<number>}*/
+        emptySlots = [],
         /**@type{!Array.<!ModificationListener>}*/
         modificationListeners = [];
 
@@ -229,15 +231,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     function getEmptyNodePosition() {
-        var l = nodes.length,
-            i = 2 * NODESSTEP;
-        while (i < l && nodes[i + PARENT] !== -1) {
-            i += NODESSTEP;
-        }
-        if (i === l) {
-            nodes.length = i + NODESSTEP;
-        }
-        return i;
+        return emptySlots.pop() || nodes.length;
     }
     /**
      * @param {number} node
@@ -374,6 +368,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
             removeText(-pos);
         }
         nodes[node + PARENT] = -1;
+        emptySlots.push(node);
     };
     /**
      * @param {number} node

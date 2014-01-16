@@ -13,4 +13,12 @@ NodeJSConsole.prototype.log = function (msg) {"use strict"; };
  */
 var console;
 function alert(x) {"use strict"; }
+/**
+ * @type {!Document}
+ */
+var document;
+/**
+ * @type {*}
+ */
+var window;
 
