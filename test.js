@@ -146,7 +146,7 @@ function domTrigger(state) {
         doc = root.ownerDocument,
         nodes = state.nodes,
         loops = state.loops,
-        change = Math.round(loops * state.change / 100),
+        change = Math.round(loops * state.change / 100) || 1,
         i;
     for (i = 0; i < change; i += 1) {
         addNode(doc, ns, nodes, loops, root);
@@ -307,6 +307,11 @@ function setupForm(body, options) {
     function render() {
         var time = new Date().getTime();
         engine.render(engineObject);
+        if (countDeepChildren(root) !== options.loops) {
+console.log(countDeepChildren(root));
+console.log(root);
+            stop();
+        }
         time = new Date().getTime() - time;
         renderCalls += 1;
         renderCallDuration += time;
@@ -315,11 +320,6 @@ function setupForm(body, options) {
             animationFrame = window.requestAnimationFrame(render);
         }
         root = div.lastChild;
-        if (countDeepChildren(root) !== options.loops) {
-console.log(countDeepChildren(root));
-console.log(root);
-            stop();
-        }
     }
     function restart() {
         stop();

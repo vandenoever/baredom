@@ -1,4 +1,7 @@
 /*global console*/
+function log(msg) {
+//    console.log(msg);
+}
 function countSiblings(n) {
     "use strict";
     var c = 0;
@@ -26,7 +29,7 @@ function print(node, depth) {
         s += " ";
     }
     s += node.localName || node.data;
-    console.log(s);
+    log(s);
     i = node.firstChild;
     while (i) {
         print(i, depth + 1);
@@ -60,6 +63,7 @@ function Simple(rootNamespaceURI, rootLocalName) {
     var self = this;
 
     function Element(doc, namespaceURI, localName) {
+        this.nodeType = 1;
         this.namespaceURI = namespaceURI;
         this.localName = localName;
         this.ownerDocument = doc;
@@ -74,7 +78,7 @@ function Simple(rootNamespaceURI, rootLocalName) {
                 n.dirty = true;
                 n = n.parentNode;
             }
-        }
+        };
         this.removeChild = function (node) {
 //console.log("> removeChild " + countDeepChildren(doc.documentElement));
             // assume node.parentNode === this
@@ -152,6 +156,7 @@ function Simple(rootNamespaceURI, rootLocalName) {
         };
     }
     function TextNode(doc, text) {
+        this.nodeType = 3;
         this.data = text;
         this.ownerDocument = doc;
         this.firstChild = null;
@@ -181,6 +186,18 @@ function SimpleBridge(vroot, root) {
         }
         return n;
     }
+    function removeChildren(node) {
+        // remove starting from last to, perhaps, have less layout overhead
+        while (node.lastChild) {
+            node.removeChild(node.lastChild);
+        }
+    }
+    function removeNextSiblings(node) {
+        var p = node.parentNode;
+        while (p.lastChild !== node) {
+            p.removeChild(p.lastChild);
+        }
+    }
     /**
      * Update the live dom nodes with information from the virtual dom.
      * The layout happens depth first along the first child node.
@@ -188,41 +205,32 @@ function SimpleBridge(vroot, root) {
      * Going in this direction should minimize layout overhead.
      */
     function renderSiblings(vn, depth) {
-        var n, p;
-
-        p = vn.shadow;
-        n = p.previousSibling;
-        while (n && depth) {
-            p.parentNode.removeChild(n);
-            n = p.previousSibling;
-        }
+        var n, s;
 
         do {
-            // update the text
-            if (vn.shadowData !== vn.data) {
-                vn.shadow.data = vn.shadowData = vn.data;
-            }
-            // check if the first child is up to date
-            n = vn.firstChild;
-            if (n) {
-                if (!n.shadow) {
-                    // create a shadow node
-                    n.shadow = createShadow(n);
+            s = vn.shadow;
+            if (vn.nodeType === 3) {
+                // update the text
+                if (vn.shadowData !== vn.data) {
+                    s.data = vn.shadowData = vn.data;
                 }
-                if (vn.shadow.firstChild !== n.shadow) {
-                    // replace the first child shadow with the new one
-                    vn.shadow.insertBefore(n.shadow, null);
-                }
-                if (vn.dirty) {
-                    renderSiblings(n, depth + 1);
-                    vn.dirty = false;
-                }
-            } else {
-                n = vn.shadow;
-                // remove starting from last to, perhaps, have less layout
-                // overhead
-                while (n.lastChild) {
-                    n.removeChild(n.lastChild);
+            } else { // nodeType === 1
+                // check if the first child is up to date
+                n = vn.firstChild;
+                if (n) {
+                    if (!n.shadow) {
+                        // create a shadow node
+                        n.shadow = createShadow(n);
+                    }
+                    if (s.firstChild !== n.shadow) {
+                        // replace the first child shadow with the new one
+                        s.insertBefore(n.shadow, s.firstChild);
+                        renderSiblings(n, depth + 1);
+                    } else {
+                        renderSiblings(n, depth + 1);
+                    }
+                } else if (s.firstChild) {
+                    removeChildren(s);
                 }
             }
             // check if the next sibling is up to date
@@ -231,41 +239,32 @@ function SimpleBridge(vroot, root) {
                 if (!n.shadow) {
                     n.shadow = createShadow(n);
                 }
-                if (vn.shadow.nextSibling !== n.shadow) {
-                    vn.shadow.parentNode.insertBefore(n.shadow, vn.shadow.nextSibling);
+                if (s.nextSibling !== n.shadow) {
+                    s.parentNode.insertBefore(n.shadow, s.nextSibling);
                 }
+            } else if (s.nextSibling) {
+                removeNextSiblings(s);
             }
-            p = vn.shadow;
             vn = n;
         } while (vn);
-
-        // this feels hacky!
-        if (depth) {
-            n = p.nextSibling;
-            while (n) {
-                p.parentNode.removeChild(n);
-                n = p.nextSibling;
-            }
-        }
     }
 
     this.render = function render() {
-        var a, b, parent, next;
+log("render");
+        var a, b;
         vroot.shadow = root;
-        parent = root.parentNode;
-        next = root.nextSibling;
-        //parent.removeChild(root);
-        if (vroot.dirty) {
-            renderSiblings(vroot, 0);
-            vroot.dirty = false;
-        }
-        //parent.insertBefore(root, next);
-/*
+        print(vroot);
+        print(root);
+        renderSiblings(vroot, 0);
         a = countDeepChildren(vroot);
         b = countDeepChildren(root);
+log(">>>>>");
+            print(vroot);
+            print(root);
+log("<<<<<");
         if (a !== b) {
-            throw "Unequal amounts of nodes: " + a + " " + b + ".";
+            console.log("Unequal amounts of nodes: " + a + " " + b + ".");
+            //throw "Unequal amounts of nodes: " + a + " " + b + ".";
         }
-*/
     };
 }
