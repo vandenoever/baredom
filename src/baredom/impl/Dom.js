@@ -1,4 +1,4 @@
-/*global baredom, assert, ModificationListener*/
+/*global baredom, assert, ModificationListener, ArrayBuffer, Int32Array*/
 /**
  * @constructor
  * @implements baredom.core.ObservableDom
@@ -7,6 +7,21 @@
  */
 baredom.impl.Dom = function (qnames, initialRootQName) {
     "use strict";
+    /**
+     * @param {!Int32Array=} old
+     * @return {!Int32Array}
+     */
+    function increaseBuffer(old) {
+        var length = 1024, array;
+        if (old) {
+            length = 16 * old.length;
+        }
+        array = new Int32Array(new ArrayBuffer(length));
+        if (old) {
+            array.set(old);
+        }
+        return array;
+    }
     var self = this,
         eventProxy = new baredom.impl.EventProxy(this),
         /**
@@ -19,9 +34,11 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
          *   first: position of the first child or 0 if there is none
          *   last: position of the last child or 0 if there is none
          *   atts: position of the attributes or 0 if there are none
-         * @type{!Array.<number>}
+         * @type{!Int32Array}
          */
-        nodes = [],
+        nodes = increaseBuffer(),
+        /**@type{number}*/
+        nodesLength = 0,
         NODESSTEP = 8,
         VALUE = 0,
         PARENT = 1,
@@ -37,6 +54,14 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         emptySlots = [],
         /**@type{!Array.<!ModificationListener>}*/
         modificationListeners = [];
+
+    /**
+     * @param {number} index
+     * @return {number}
+     */
+    function get(index) {
+        return nodes[index];
+    }
 
     /**
      * @return {number}
@@ -92,7 +117,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getQName = function (node) {
-        var v = nodes[node];
+        var v = get(node);
         if (v < 0) { // node is text node
             v = 0;
         }
@@ -104,7 +129,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {string|undefined}
      */
     this.getText = function (node) {
-        var pos = nodes[node],
+        var pos = get(node),
             v;
         if (pos < 0) {
             v = getText(-pos);
@@ -117,7 +142,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getAttributeCount = function (node) {
-        return atts.getAttributeCount(nodes[node + ATTS]);
+        return atts.getAttributeCount(get(node + ATTS));
     };
 
     /**
@@ -126,7 +151,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getAttributeQName = function (node, attr) {
-        return atts.getQName(nodes[node + ATTS], attr);
+        return atts.getQName(get(node + ATTS), attr);
     };
 
     /**
@@ -135,7 +160,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {string}
      */
     this.getAttributeValue = function (node, attr) {
-        return atts.getValue(nodes[node + ATTS], attr);
+        return atts.getValue(get(node + ATTS), attr);
     };
     /**
      * @param {number} node
@@ -143,7 +168,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {string|undefined}
      */
     this.getAttribute = function (node, attqname) {
-        var a = nodes[node + ATTS];
+        var a = get(node + ATTS);
         return atts.getAttribute(a, attqname);
     };
     /**
@@ -161,12 +186,12 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getChildCount = function (node) {
-        var pos = nodes[node],
+        var pos = get(node),
             childCount = 0;
         if (pos > 0) {
-            pos = nodes[pos + 3];
+            pos = get(pos + 3);
             while (pos > 0) {
-                pos = nodes[pos + 2];
+                pos = get(pos + 2);
                 childCount += 1;
             }
         }
@@ -177,42 +202,42 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getParentNode = function (node) {
-        return nodes[node + 1] || 0;
+        return get(node + 1) || 0;
     };
     /**
      * @param {number} node
      * @return {number}
      */
     this.getPreviousSibling = function (node) {
-        return nodes[node + 2] || 0;
+        return get(node + 2) || 0;
     };
     /**
      * @param {number} node
      * @return {number}
      */
     this.getNextSibling = function (node) {
-        return nodes[node + 3] || 0;
+        return get(node + 3) || 0;
     };
     /**
      * @param {number} node
      * @return {number}
      */
     this.getFirstChild = function (node) {
-        return nodes[node + 4] || 0;
+        return get(node + 4) || 0;
     };
     /**
      * @param {number} node
      * @return {number}
      */
     this.getLastChild = function (node) {
-        return nodes[node + 5] || 0;
+        return get(node + 5) || 0;
     };
     /**
      * @param {number} node
      * @param {number} qname
      */
     this.setQName = function (node, qname) {
-        var pos = nodes[node];
+        var pos = get(node);
         if (pos > 0) {
             nodes[node] = qname;
         }
@@ -222,7 +247,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @param {string} text
      */
     this.setText = function (node, text) {
-        var pos = nodes[node];
+        var pos = get(node);
         if (pos < 0) {
             nodes[node] = -setText(-pos, text);
         }
@@ -231,7 +256,15 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     function getEmptyNodePosition() {
-        return emptySlots.pop() || nodes.length;
+        var n = emptySlots.pop();
+        if (!n) {
+            n = nodesLength;
+            nodesLength += NODESSTEP;
+            if (nodes.length < nodesLength) {
+                nodes = increaseBuffer(nodes);
+            }
+        }
+        return n;
     }
     /**
      * @param {number} node
@@ -240,7 +273,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      */
     function insertIntoTree(node, parent, ref) {
         var next = ref || 0,
-            prev = (next === 0) ? nodes[parent + LAST] : nodes[next + PREV];
+            prev = (next === 0) ? get(parent + LAST) : get(next + PREV);
         nodes[node + PARENT] = parent;
         nodes[node + PREV] = prev;
         nodes[node + NEXT] = next;
@@ -264,9 +297,9 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @param {number} node
      */
     function removeFromTree(node) {
-        var prev = nodes[node + PREV],
-            next = nodes[node + NEXT],
-            parent = nodes[node + PARENT];
+        var prev = get(node + PREV),
+            next = get(node + NEXT),
+            parent = get(node + PARENT);
         if (prev !== 0) {
             nodes[prev + NEXT] = next;
         }
@@ -338,20 +371,20 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @param {number} node
      */
     function removeChildren(node) {
-        var child = nodes[node + FIRST],
-            att = nodes[node + ATTS],
+        var child = get(node + FIRST),
+            att = get(node + ATTS),
             pos;
         if (att > 0) {
-            atts.removeAttributes(nodes[node + ATTS]);
+            atts.removeAttributes(get(node + ATTS));
         }
         while (child !== 0) {
             removeChildren(child);
             nodes[child + PARENT] = -1;
-            pos = nodes[child];
+            pos = get(child);
             if (pos < 0) { // text
                 removeText(-pos);
             }
-            child = nodes[child + NEXT];
+            child = get(child + NEXT);
         }
     }
     /**
@@ -362,7 +395,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         assert(node % NODESSTEP === 0, "Invalid node.");
         signalAboutToRemoveNode(node);
         removeChildren(node);
-        var pos = nodes[node];
+        var pos = get(node);
         removeFromTree(node);
         if (pos < 0) { // text
             removeText(-pos);
@@ -384,7 +417,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         var p = parent;
         while (p !== 0) {
             assert(p !== node, "Parent is child of node.");
-            p = nodes[p + PARENT];
+            p = get(p + PARENT);
         }
         removeFromTree(node);
         insertIntoTree(node, parent, ref);
@@ -423,7 +456,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.getVersion = function (node) {
-        return nodes[node + VERSION] || 0;
+        return get(node + VERSION) || 0;
     };
     /**
      * @param {ModificationListener} listener
@@ -454,10 +487,16 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         eventProxy.addEventListener(nodeid, eventType, handler);
     };
     /**
-     * @return {!Array.<number>}
+     * @return {!Int32Array}
      */
     this.getNodesArray = function () {
         return nodes;
+    };
+    /**
+     * @return {number}
+     */
+    this.getNodesArrayLength = function () {
+        return nodesLength;
     };
     /**
      * @return {!baredom.impl.EventProxy}
@@ -478,7 +517,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
         return atts;
     };
     function init() {
-        nodes.length = 2 * NODESSTEP;
+        nodesLength = 2 * NODESSTEP;
         nodes[NODESSTEP] = initialRootQName;
         nodes[NODESSTEP + 1] = 0;
         nodes[NODESSTEP + 2] = 0;

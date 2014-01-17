@@ -21,4 +21,21 @@ var document;
  * @type {*}
  */
 var window;
-
+/**
+ * @constructor
+ * @param {number} length
+ */
+function ArrayBuffer(length) {"use strict"; }
+/**
+ * @constructor
+ * @param {!ArrayBuffer} buffer
+ */
+function Int32Array(buffer) {"use strict"; }
+/**
+ * @type {number}
+ */
+Int32Array.prototype.length;
+/**
+ * @param {!Int32Array} array
+ */
+Int32Array.prototype.set = function (array) {"use strict"; };

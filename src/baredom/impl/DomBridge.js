@@ -39,7 +39,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         return documentElement;
     };
     /**
-     * @param {!Array.<number>} vdom
+     * @param {!Int32Array} vdom
      * @param {!Array.<Text>} textCache
      * @param {!Object.<number,!Array.<Element>>} elementCache
      */
@@ -50,7 +50,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         for (j = 2; j < l; j += 1) {
             i = j * NODESSTEP;
             shadowValue = shadow[i + VALUE];
-            value = vdom[i + VALUE];
+            value = /**@type{number}*/(vdom[i + VALUE]);
             if (shadowValue < 0 && value > 0) {
                 stringStore.removeString(-shadowValue);
                 textCache.push(liveNodes[j]);
@@ -67,7 +67,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         }
     }
     /**
-     * @param {!Array.<number>} vdom
+     * @param {!Int32Array} vdom
      * @param {!Array.<Text>} textCache
      * @param {!Object.<number,!Array.<Element>>} elementCache
      */
@@ -76,19 +76,20 @@ baredom.impl.DomBridge = function (dom, documentElement) {
             /**@type{Node}*/
             node,
             shadowl = shadow.length,
-            l = vdom.length / NODESSTEP,
+            vdomLength = dom.getNodesArrayLength(),
+            l = vdomLength / NODESSTEP,
             texts = textCache.length,
             doc = documentElement.ownerDocument;
         liveNodes.length = l;
         // extend the shadow
-        shadow.length = vdom.length;
-        for (j = shadowl; j < vdom.length; j += 1) {
+        shadow.length = vdomLength;
+        for (j = shadowl; j < vdomLength; j += 1) {
             shadow[j] = 0;
         }
         for (j = 2; j < l; j += 1) {
             i = j * NODESSTEP;
             shadowValue = shadow[i + VALUE];
-            value = vdom[i + VALUE];
+            value = /**@type{number}*/(vdom[i + VALUE]);
             if (value < 0 && shadowValue >= 0) {
                 if (texts > 0) {
                     node = textCache.pop();
@@ -142,16 +143,16 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         }
     }
     /**
-     * @param {!Array.<number>} vdom
+     * @param {!Int32Array} vdom
      * @param {number} nodeid
      * @param {!Element} element
      */
     function updateAttributes(vdom, nodeid, element) {
         var pos = nodeid + ATTS,
-            newAtts = vdom[pos],
+            newAtts = /**@type{number}*/(vdom[pos]),
             oldAtts = shadow[pos];
         if (newAtts !== oldAtts) {
-                attStore.removeAttributes(oldAtts);
+            attStore.removeAttributes(oldAtts);
             attStore.addAttributes(newAtts);
             shadow[pos] = newAtts;
             updateAllAttributes(nodeid, element);
@@ -160,10 +161,10 @@ baredom.impl.DomBridge = function (dom, documentElement) {
     /**
      * @param {number} parent
      * @param {!Element} parentNode
-     * @param {!Array.<number>} vdom
+     * @param {!Int32Array} vdom
      */
     function updateElement(parent, parentNode, vdom) {
-        var child = vdom[parent + LAST],
+        var child = /**@type{number}*/(vdom[parent + LAST]),
             value,
             childNode,
             nextChild = null,
@@ -172,7 +173,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
         updateAttributes(vdom, parent, parentNode);
         while (child !== 0) {
             childNode = liveNodes[child / NODESSTEP];
-            value = vdom[child + VALUE];
+            value = /**@type{number}*/(vdom[child + VALUE]);
             if (value > 0) {
                 updateElement(child, /**@type{!Element}*/(childNode), vdom);
             } else {
@@ -186,7 +187,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
             }
             parentNode.insertBefore(childNode, nextChild);
             nextChild = childNode;
-            child = vdom[child + PREV];
+            child = /**@type{number}*/(vdom[child + PREV]);
         }
         while (parentNode.firstChild && parentNode.firstChild !== nextChild) {
             parentNode.removeChild(parentNode.firstChild);

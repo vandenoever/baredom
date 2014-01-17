@@ -1,4 +1,4 @@
-/*global baredom, document, window, console, Simple*/
+/*global baredom, document, window, console, Simple, SimpleBridge*/
 /*jslint emptyblock: true*/
 /**
 Compare different speeds of dom operations.
@@ -34,6 +34,34 @@ function baredomInitialize(state) {
         }
     }
 }
+function addNode(doc, ns, nodes, max, root, pos) {
+    "use strict";
+    var r, j, n, m;
+    r = Math.random();
+    j = pos || Math.floor(r * max);
+    n = nodes[j];
+    if (n) {
+        while (n.firstChild) {
+            n.parentNode.insertBefore(n.firstChild, n);
+        }
+        n.parentNode.removeChild(n);
+    }
+    if (j % 40 === 0) {
+        n = doc.createElementNS(ns, "div");
+    } else if (j % 2) {
+        n = doc.createElementNS(ns, "span");
+    } else {
+        n = doc.createTextNode(r + " ");
+    }
+    nodes[j] = n;
+    m = nodes[(j + 1) % max];
+    m = (m && m !== n) ? m : root;
+    if (m.data) {
+        m.parentNode.insertBefore(n, m);
+    } else {
+        m.appendChild(n);
+    }
+}
 function domInitialize(state) {
     "use strict";
     var root = state.root,
@@ -41,18 +69,37 @@ function domInitialize(state) {
         doc = root.ownerDocument,
         nodes = state.nodes,
         loops = state.loops,
-        i,
-        n,
-        r;
+        i;
     for (i = 0; i < loops; i += 1) {
-        r = Math.random();
-        if (i % 5) {
-            n = doc.createTextNode(r + " ");
-        } else {
-            n = doc.createElementNS(ns, "div");
+        addNode(doc, ns, nodes, i, root, i);
+    }
+}
+function addBareNode(doc, ns, nodes, max, root) {
+    "use strict";
+    var r, j, n, m;
+    r = Math.random();
+    j = Math.floor(r * max);
+    n = nodes[j];
+    if (n) {
+        while (n.firstChild) {
+            n.parentNode.insertBefore(n.firstChild, n);
         }
-        nodes[i] = n;
-        root.appendChild(n);
+        n.parentNode.removeChild(n);
+    }
+    if (j % 40 === 0) {
+        n = doc.createElementNS(ns, "div");
+    } else if (j % 2) {
+        n = doc.createElementNS(ns, "span");
+    } else {
+        n = doc.createTextNode(r + " ");
+    }
+    nodes[j] = n;
+    m = nodes[(j + 1) % max];
+    m = (m && m !== n) ? m : root;
+    if (m.data) {
+        m.parentNode.insertBefore(n, m);
+    } else {
+        m.appendChild(n);
     }
 }
 function baredomTrigger(state) {
@@ -82,6 +129,16 @@ function baredomTrigger(state) {
         }
     }
 }
+/**
+ * return true if a is contained in b
+ */
+function contains(a, b) {
+    "use strict";
+    while (a !== b && a.parentNode) {
+        a = a.parentNode;
+    }
+    return a === b;
+}
 function domTrigger(state) {
     "use strict";
     var root = state.root,
@@ -90,24 +147,9 @@ function domTrigger(state) {
         nodes = state.nodes,
         loops = state.loops,
         change = Math.round(loops * state.change / 100),
-        i,
-        j,
-        n,
-        r;
+        i;
     for (i = 0; i < change; i += 1) {
-        r = Math.random();
-        j = Math.floor(r * loops);
-        n = nodes[j];
-        if (n) {
-            n.parentNode.removeChild(n);
-        }
-        if (j % 5) {
-            n = doc.createTextNode(r + " ");
-        } else {
-            n = doc.createElementNS(ns, "div");
-        }
-        nodes[j] = n;
-        root.insertBefore(n, nodes[j + 1]);
+        addNode(doc, ns, nodes, loops, root);
     }
 }
 function detachedDomTrigger(state) {
@@ -177,8 +219,9 @@ function importSetup(div, loops, change) {
 }
 function simpleSetup(div, loops, change) {
     "use strict";
-    var root = new Simple(div),
-        state = {root: root.documentElement, loops: loops, change: change, nodes: []};
+    var root = new Simple(div.namespaceURI, div.localName),
+        bridge = new SimpleBridge(root.documentElement, div),
+        state = {bridge: bridge, root: root.documentElement, loops: loops, change: change, nodes: []};
     domInitialize(state);
     return state;
 }
@@ -212,6 +255,10 @@ function importRender(state) {
     div.parentNode.replaceChild(clone, div);
     state.live = clone;
 }
+function simpleRender(state) {
+    "use strict";
+    state.bridge.render();
+}
 
 function setupForm(body, options) {
     "use strict";
@@ -227,8 +274,9 @@ function setupForm(body, options) {
         triggerInterval,
         renderInterval,
         animationFrame,
+        stopped = true,
         infoDiv = document.createElement("div");
-    options.loops = options.loops || 2000;
+    options.loops = options.loops || 5000;
     options.change = options.change || 10;
     infoDiv.appendChild(document.createTextNode(""));
     function updateInfo() {
@@ -240,6 +288,14 @@ function setupForm(body, options) {
             + Math.round(100 * (triggerCallDuration + renderCallDuration) / duration) + "% cpu, "
             + Math.round(triggerCalls * 1000 / duration) + " triggers per second, "
             + Math.round(renderCalls * 1000 / duration) + " renders per second.";
+    }
+    function stop() {
+        stopped = true;
+        window.clearInterval(triggerInterval);
+        window.clearInterval(renderInterval);
+        if (window.cancelAnimationFrame) {
+            window.cancelAnimationFrame(animationFrame);
+        }
     }
     function trigger() {
         var time = new Date().getTime();
@@ -255,36 +311,40 @@ function setupForm(body, options) {
         renderCalls += 1;
         renderCallDuration += time;
         updateInfo();
-        if (!options.renderInterval && window.requestAnimationFrame) {
+        if (!options.renderInterval && window.requestAnimationFrame && !stopped) {
             animationFrame = window.requestAnimationFrame(render);
         }
-    }
-    function stop() {
-        window.clearInterval(triggerInterval);
-        window.clearInterval(renderInterval);
-        if (window.cancelAnimationFrame) {
-            window.cancelAnimationFrame(animationFrame);
+        root = div.lastChild;
+        if (countDeepChildren(root) !== options.loops) {
+console.log(countDeepChildren(root));
+console.log(root);
+            stop();
         }
-        while (root.firstChild) {
-            root.removeChild(root.firstChild);
-        }
-        div.removeChild(div.lastChild);
-        div.appendChild(root);
     }
     function restart() {
         stop();
-        runStart = new Date().getTime();
-        triggerCalls = triggerCallDuration = 0;
-        renderCalls = renderCallDuration = 0;
         if (engine.name === "stop") {
             return;
         }
+        stopped = false;
+        while (root.firstChild) {
+            root.removeChild(root.firstChild);
+        }
         engineObject = engine.setup(root, options.loops, options.change);
+        render();
+/*
+        if (root.childNodes.length !== options.loops) {
+console.log(root.childNodes.length);
+console.log(root);
+            return stop();
+        }
+*/
+        runStart = new Date().getTime();
+        triggerCalls = triggerCallDuration = 0;
+        renderCalls = renderCallDuration = 0;
         triggerInterval = window.setInterval(trigger, options.triggerInterval);
         if (options.renderInterval || !window.requestAnimationFrame) {
             renderInterval = window.setInterval(render, options.renderInterval);
-        } else {
-            animationFrame = window.requestAnimationFrame(render);
         }
     }
     function load(e) {
@@ -292,7 +352,7 @@ function setupForm(body, options) {
         restart();
     }
     div.appendChild(document.createTextNode("% change per trigger: "));
-    [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(function (n) {
+    [0, 1, 2, 5, 10, 20, 50, 100].forEach(function (n) {
         var span = document.createElement("span");
         span.appendChild(document.createTextNode(n + " "));
         span.onclick = function () {
@@ -335,6 +395,14 @@ function setupForm(body, options) {
     div.appendChild(infoDiv);
     div.appendChild(root);
     body.appendChild(div);
+    // debug
+    options.loops = 5;
+    options.change = 1;
+/*
+    //options.triggerInterval = 1000;
+    //options.renderInterval = 1000;
+*/
+    load(options.engines[5]);
 }
 
 function addRandomTexts(bridge) {
@@ -417,11 +485,13 @@ function init() {
             trigger: baredomTrigger,
             render: baredomRender
         }, {
+/*
             name: "W3 on Baredom",
             setup: w3baredomSetup,
             trigger: domTrigger,
             render: baredomRender
         }, {
+*/
             name: "Browser DOM",
             setup: domSetup,
             trigger: domTrigger,
@@ -445,7 +515,7 @@ function init() {
             name: "Simple",
             setup: simpleSetup,
             trigger: domTrigger,
-            render: function () {}
+            render: simpleRender
         }, {
             name: "Dummy",
             setup: dummySetup,
