@@ -5,18 +5,25 @@
  * @constructor
  * @implements Node
  * @param {number} nodeid
+ * @param {number} nodeType
  * @param {!baredom.impl.w3c.Document} owner
+ * @param {?string} namespaceURI
+ * @param {?string} localName
  */
-baredom.impl.w3c.Node = function Node(nodeid, owner) {
+baredom.impl.w3c.Node = function Node(nodeid, nodeType, owner, namespaceURI, localName) {
     "use strict";
     // set the constant values for this instance
     Object.defineProperties(this, {
-        impl_nodeid: { value: nodeid },
+        impl_nodeid: { value: nodeid, writable: true },
         impl_firstChild: { writable: true},
         impl_lastChild: { writable: true},
         impl_previousSibling: { writable: true},
         impl_nextSibling: { writable: true},
-        ownerDocument: { value: owner }
+        impl_nodeValue: { writable: true},
+        nodeType: { value: nodeType},
+        ownerDocument: { value: owner },
+        namespaceURI: { value: namespaceURI},
+        localName: { value: localName}
     });
     Object.seal(this);
 };
@@ -108,7 +115,7 @@ baredom.impl.w3c.Node.prototype = {
     },
     get nodeName() {
         "use strict";
-        return this.ownerDocument.impl_getText(this);
+        return "";
     },
     /** @param {string} value */
     set nodeName(value) {
@@ -146,10 +153,14 @@ baredom.impl.w3c.Node.prototype.nodeType;
  */
 baredom.impl.w3c.Node.prototype.ownerDocument;
 /**
- * @param {Node} newChild
- * @return {Node}
+ * @param {!Node} newChild
+ * @return {!Node}
  */
-baredom.impl.w3c.Node.prototype.appendChild = function (newChild) {"use strict"; };
+baredom.impl.w3c.Node.prototype.appendChild = function (newChild) {
+    "use strict";
+    this.insertBefore(newChild, null);
+    return newChild;
+};
 /**
  * @param {boolean} deep
  * @return {Node}
@@ -160,11 +171,34 @@ baredom.impl.w3c.Node.prototype.cloneNode = function (deep) {"use strict"; };
  */
 baredom.impl.w3c.Node.prototype.hasChildNodes = function () {"use strict"; };
 /**
- * @param {Node} newChild
- * @param {Node?} refChild
- * @return {Node}
+ * @param {!Node} newChild
+ * @param {?Node} refChild
+ * @return {!Node}
  */
-baredom.impl.w3c.Node.prototype.insertBefore = function (newChild, refChild) {"use strict"; };
+baredom.impl.w3c.Node.prototype.insertBefore = function (newChild, refChild) {
+    "use strict";
+    if (!this.impl_nodeid) {
+        throw "TODO";
+    }
+    var implRef = /**@type{?baredom.impl.w3c.Node}*/(refChild),
+        child = /**@type{?baredom.impl.w3c.Node}*/(newChild),
+        doc = this.ownerDocument,
+        dom = doc.impl_dom,
+        id,
+        /**@type{number}*/
+        ref = refChild ? implRef.impl_nodeid : 0,
+        qname;
+    if (child.nodeType === 1) {
+        qname = dom.getQNames().getQName(child.namespaceURI, child.localName);
+        id = dom.insertElement(qname, this.impl_nodeid, ref);
+    } else {
+        id = dom.insertText(/**@type{string}*/(child.impl_nodeValue),
+                this.impl_nodeid, ref);
+    }
+    child.impl_nodeid = id;
+    doc.impl_idToNodeMap[id] = child;
+    return child;
+};
 /**
  * @param {Node} oldChild
  * @return {Node}
@@ -208,5 +242,9 @@ baredom.impl.w3c.Node.prototype.impl_nextSibling;
  * @type {baredom.impl.w3c.Node|undefined}
  */
 baredom.impl.w3c.Node.prototype.impl_parentNode;
+/**
+ * @type {?string}
+ */
+baredom.impl.w3c.Node.prototype.impl_nodeValue;
 Object.freeze(baredom.impl.w3c.Node);
 Object.freeze(baredom.impl.w3c.Node.prototype);

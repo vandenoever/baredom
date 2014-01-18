@@ -225,10 +225,8 @@ function SimpleBridge(vroot, root) {
                     if (s.firstChild !== n.shadow) {
                         // replace the first child shadow with the new one
                         s.insertBefore(n.shadow, s.firstChild);
-                        renderSiblings(n, depth + 1);
-                    } else {
-                        renderSiblings(n, depth + 1);
                     }
+                    renderSiblings(n, depth + 1);
                 } else if (s.firstChild) {
                     removeChildren(s);
                 }
@@ -253,9 +251,10 @@ function SimpleBridge(vroot, root) {
 log("render");
         var a, b;
         vroot.shadow = root;
-        print(vroot);
-        print(root);
+//        print(vroot);
+//        print(root);
         renderSiblings(vroot, 0);
+/**
         a = countDeepChildren(vroot);
         b = countDeepChildren(root);
 log(">>>>>");
@@ -266,5 +265,6 @@ log("<<<<<");
             console.log("Unequal amounts of nodes: " + a + " " + b + ".");
             //throw "Unequal amounts of nodes: " + a + " " + b + ".";
         }
+*/
     };
 }

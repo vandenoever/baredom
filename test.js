@@ -109,7 +109,7 @@ function baredomTrigger(state) {
         nodes = state.nodes,
         qname = state.divQName,
         loops = state.loops,
-        change = Math.round(loops * state.change / 100),
+        change = Math.round(loops * state.change / 100) || 1,
         i,
         j,
         n,
@@ -307,11 +307,6 @@ function setupForm(body, options) {
     function render() {
         var time = new Date().getTime();
         engine.render(engineObject);
-        if (countDeepChildren(root) !== options.loops) {
-console.log(countDeepChildren(root));
-console.log(root);
-            stop();
-        }
         time = new Date().getTime() - time;
         renderCalls += 1;
         renderCallDuration += time;
@@ -400,9 +395,9 @@ console.log(root);
     options.change = 1;
 /*
     //options.triggerInterval = 1000;
-    //options.renderInterval = 1000;
 */
-    load(options.engines[5]);
+    options.renderInterval = 100;
+    load(options.engines[1]);
 }
 
 function addRandomTexts(bridge) {
@@ -485,13 +480,11 @@ function init() {
             trigger: baredomTrigger,
             render: baredomRender
         }, {
-/*
             name: "W3 on Baredom",
             setup: w3baredomSetup,
             trigger: domTrigger,
             render: baredomRender
         }, {
-*/
             name: "Browser DOM",
             setup: domSetup,
             trigger: domTrigger,

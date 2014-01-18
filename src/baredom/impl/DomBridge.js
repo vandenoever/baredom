@@ -185,7 +185,7 @@ baredom.impl.DomBridge = function (dom, documentElement) {
                     childNode.data = text;
                 }
             }
-            parentNode.insertBefore(childNode, nextChild);
+            parentNode.insertBefore(/**@type{!Node}*/(childNode), nextChild);
             nextChild = childNode;
             child = /**@type{number}*/(vdom[child + PREV]);
         }

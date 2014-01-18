@@ -7,10 +7,12 @@
  * @extends baredom.impl.w3c.Node
  * @param {number} nodeid
  * @param {!baredom.impl.w3c.Document} owner
+ * @param {string} namespaceURI
+ * @param {string} localName
  */
-baredom.impl.w3c.Element = function Element(nodeid, owner) {
+baredom.impl.w3c.Element = function Element(nodeid, owner, namespaceURI, localName) {
     "use strict";
-    baredom.impl.w3c.Node.call(this, nodeid, owner);
+    baredom.impl.w3c.Node.call(this, nodeid, 1, owner, namespaceURI, localName);
     Object.seal(this);
 };
 baredom.impl.w3c.Element.prototype = Object.create(baredom.impl.w3c.Node.prototype, {

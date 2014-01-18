@@ -58,7 +58,7 @@ Document.prototype.createEntityReference = function (name) {"use strict"; };
  */
 Document.prototype.createProcessingInstruction = function (target, data) {"use strict"; };
 /**
- * @param {number|string} data
+ * @param {string} data
  * @return {!Text}
  */
 Document.prototype.createTextNode = function (data) {"use strict"; };

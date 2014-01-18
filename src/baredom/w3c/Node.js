@@ -30,7 +30,7 @@ Node.prototype.nextSibling;
  */
 Node.prototype.nodeName;
 /**
- * @type {string}
+ * @type {?string}
  */
 Node.prototype.nodeValue;
 /**
@@ -58,8 +58,8 @@ Node.prototype.namespaceURI;
  */
 Node.prototype.localName;
 /**
- * @param {Node} newChild
- * @return {Node}
+ * @param {!Node} newChild
+ * @return {!Node}
  */
 Node.prototype.appendChild = function (newChild) {"use strict"; };
 /**
@@ -72,9 +72,9 @@ Node.prototype.cloneNode = function (deep) {"use strict"; };
  */
 Node.prototype.hasChildNodes = function () {"use strict"; };
 /**
- * @param {Node} newChild
- * @param {Node?} refChild
- * @return {Node}
+ * @param {!Node} newChild
+ * @param {?Node} refChild
+ * @return {!Node}
  */
 Node.prototype.insertBefore = function (newChild, refChild) {"use strict"; };
 /**

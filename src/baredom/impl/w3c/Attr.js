@@ -6,10 +6,12 @@
  * @implements Attr
  * @extends baredom.impl.w3c.Node
  * @param {!baredom.impl.w3c.Document} owner
+ * @param {string} namespaceURI
+ * @param {string} localName
  */
-baredom.impl.w3c.Attr = function Attr(owner) {
+baredom.impl.w3c.Attr = function Attr(owner, namespaceURI, localName) {
     "use strict";
-    baredom.impl.w3c.Node.call(this, 0, owner);
+    baredom.impl.w3c.Node.call(this, 0, 2, owner, namespaceURI, localName);
     Object.seal(this);
 };
 baredom.impl.w3c.Attr.prototype = Object.create(baredom.impl.w3c.Node.prototype, {

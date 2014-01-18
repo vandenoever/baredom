@@ -11,9 +11,12 @@
 baredom.impl.w3c.Document = function Document(dom) {
     "use strict";
     this.impl_dom = dom;
-    var documentElement = dom.getDocumentElement();
+    var documentElement = dom.getDocumentElement(),
+        qnames = dom.getQNames(),
+        qname = dom.getQName(documentElement);
     dom.addModificationListener(this);
-    this.documentElement = new baredom.impl.w3c.Element(documentElement, this);
+    this.documentElement = new baredom.impl.w3c.Element(documentElement, this,
+            qnames.getNamespace(qname), qnames.getLocalName(qname));
     this.impl_idToNodeMap[documentElement] = this.documentElement;
 };
 baredom.impl.w3c.Document.prototype = Object.create(baredom.impl.w3c.Node.prototype, {
@@ -34,7 +37,7 @@ baredom.impl.w3c.Document.prototype.impl_idToNodeMap = {};
 baredom.impl.w3c.Document.prototype.implementation;
 baredom.impl.w3c.Document.prototype.createAttribute = function (name) {
     "use strict";
-    return new baredom.impl.w3c.Attr(this);
+    return new baredom.impl.w3c.Attr(this, "", name);
 };
 baredom.impl.w3c.Document.prototype.createCDATASection = function (name) {
     "use strict";
@@ -54,7 +57,8 @@ baredom.impl.w3c.Document.prototype.createElement = function (name) {
 };
 baredom.impl.w3c.Document.prototype.createElementNS = function (namespaceURI, qualifiedName) {
     "use strict";
-    return new baredom.impl.w3c.Element(0, this);
+    var n = new baredom.impl.w3c.Element(0, this, namespaceURI, qualifiedName);
+    return n;
 };
 baredom.impl.w3c.Document.prototype.createEntityReference = function (name) {
     "use strict";
@@ -64,9 +68,15 @@ baredom.impl.w3c.Document.prototype.createProcessingInstruction = function (name
     "use strict";
     throw "TODO";
 };
-baredom.impl.w3c.Document.prototype.createTextNode = function (name) {
+/**
+ * @param {string} text
+ * @return {!baredom.impl.w3c.Text}
+ */
+baredom.impl.w3c.Document.prototype.createTextNode = function (text) {
     "use strict";
-    return new baredom.impl.w3c.Text(0, this);
+    var n = new baredom.impl.w3c.Text(0, this);
+    n.impl_nodeValue = text;
+    return n;
 };
 baredom.impl.w3c.Document.prototype.getElementsByTagName = function (name) {
     "use strict";
@@ -111,7 +121,14 @@ baredom.impl.w3c.Document.prototype.aboutToRemoveNode = function (dom, node) {
  */
 baredom.impl.w3c.Document.prototype.impl_getText = function (node) {
     "use strict";
-    return "todo " + node.impl_nodeid;
+    var n,
+        nodeid = node.impl_nodeid;
+    if (nodeid === 0) {
+        n = this.impl_nodeValue;
+    } else {
+        n = this.impl_dom.getText(nodeid);
+    }
+    return /**@type{string}*/(n);
 };
 /**
  * @param {number} node
@@ -123,11 +140,17 @@ baredom.impl.w3c.Document.prototype.impl_getNode = function (node) {
         return null;
     }
     var n = this.impl_idToNodeMap[node],
-        text;
+        text,
+        dom = this.impl_dom,
+        qnames,
+        qname;
     if (n === undefined) {
-        text = this.impl_dom.getText(node);
+        text = dom.getText(node);
         if (text === undefined) {
-            n = new baredom.impl.w3c.Element(node, this);
+            qnames = dom.getQNames();
+            qname = dom.getQName(node);
+            n = new baredom.impl.w3c.Element(node, this,
+                qnames.getNamespace(qname), qnames.getLocalName(qname));
         } else {
             n = new baredom.impl.w3c.Text(node, this);
         }
