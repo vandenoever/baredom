@@ -16,24 +16,6 @@ triggerinterval: ms between trigger calls
 renderinterval: if applicable, this 
 **/
 
-function baredomInitialize(state) {
-    "use strict";
-    var vdom = state.bridge.getVirtualDom(),
-        root = vdom.getDocumentElement(),
-        nodes = state.nodes,
-        qname = state.divQName,
-        loops = state.loops,
-        i,
-        r;
-    for (i = 0; i < loops; i += 1) {
-        r = Math.random();
-        if (i % 5) {
-            nodes[i] = vdom.insertText(r + " ", root, 0);
-        } else {
-            nodes[i] = vdom.insertElement(qname, root, 0);
-        }
-    }
-}
 function addNode(doc, ns, nodes, max, root, pos) {
     "use strict";
     var r, j, n, m;
@@ -74,32 +56,49 @@ function domInitialize(state) {
         addNode(doc, ns, nodes, i, root, i);
     }
 }
-function addBareNode(doc, ns, nodes, max, root) {
+function addBareNode(dom, divQName, spanQName, nodes, max, root) {
     "use strict";
-    var r, j, n, m;
+    var r, j, n, m, p;
     r = Math.random();
     j = Math.floor(r * max);
     n = nodes[j];
     if (n) {
-        while (n.firstChild) {
-            n.parentNode.insertBefore(n.firstChild, n);
+        p = dom.getParentNode(n);
+        m = dom.getFirstChild(n);
+        while (m) {
+            dom.moveNode(m, p, n);
+            m = dom.getFirstChild(n);
         }
-        n.parentNode.removeChild(n);
+        dom.removeNode(n);
     }
-    if (j % 40 === 0) {
-        n = doc.createElementNS(ns, "div");
-    } else if (j % 2) {
-        n = doc.createElementNS(ns, "span");
-    } else {
-        n = doc.createTextNode(r + " ");
-    }
-    nodes[j] = n;
     m = nodes[(j + 1) % max];
     m = (m && m !== n) ? m : root;
-    if (m.data) {
-        m.parentNode.insertBefore(n, m);
+    if (dom.getText(m) !== undefined) {
+        p = dom.getParentNode(m);
     } else {
-        m.appendChild(n);
+        p = m;
+        m = 0;
+    }
+    if (j % 40 === 0) {
+        n = dom.insertElement(divQName, p, m);
+    } else if (j % 2) {
+        n = dom.insertElement(spanQName, p, m);
+    } else {
+        n = dom.insertText(r + " ", p, m);
+    }
+    nodes[j] = n;
+}
+function baredomInitialize(state) {
+    "use strict";
+    var vdom = state.bridge.getVirtualDom(),
+        root = vdom.getDocumentElement(),
+        nodes = state.nodes,
+        divQName = state.divQName,
+        spanQName = state.spanQName,
+        loops = state.loops,
+        i;
+    for (i = 0; i < loops; i += 1) {
+        addBareNode(vdom, divQName, spanQName, nodes, loops, root);
     }
 }
 function baredomTrigger(state) {
@@ -107,37 +106,14 @@ function baredomTrigger(state) {
     var vdom = state.bridge.getVirtualDom(),
         root = vdom.getDocumentElement(),
         nodes = state.nodes,
-        qname = state.divQName,
+        divQName = state.divQName,
+        spanQName = state.spanQName,
         loops = state.loops,
         change = Math.round(loops * state.change / 100) || 1,
-        i,
-        j,
-        n,
-        r;
+        i;
     for (i = 0; i < change; i += 1) {
-        r = Math.random();
-        j = Math.floor(r * loops);
-        n = nodes[j];
-        if (n) {
-            vdom.removeNode(n);
-        }
-        n = nodes[j + 1] || 0;
-        if (j % 5) {
-            nodes[j] = vdom.insertText(r + " ", root, n);
-        } else {
-            nodes[j] = vdom.insertElement(qname, root, n);
-        }
+        addBareNode(vdom, divQName, spanQName, nodes, loops, root);
     }
-}
-/**
- * return true if a is contained in b
- */
-function contains(a, b) {
-    "use strict";
-    while (a !== b && a.parentNode) {
-        a = a.parentNode;
-    }
-    return a === b;
 }
 function domTrigger(state) {
     "use strict";
@@ -168,10 +144,11 @@ function detachedDomTrigger(state) {
 function baredomSetup(div, loops, change) {
     "use strict";
     var qnames = new baredom.impl.QName(),
-        qname = qnames.getQName(document.body.namespaceURI, "div"),
-        vdom = new baredom.impl.Dom(qnames, qname),
+        divQName = qnames.getQName(document.body.namespaceURI, "div"),
+        spanQName = qnames.getQName(document.body.namespaceURI, "span"),
+        vdom = new baredom.impl.Dom(qnames, divQName),
         bridge = new baredom.impl.DomBridge(vdom, div),
-        state = {bridge: bridge, nodes: [], divQName: qname, loops: loops, change: change};
+        state = {bridge: bridge, nodes: [], divQName: divQName, spanQName: spanQName, loops: loops, change: change};
     baredomInitialize(state);
     return state;
 }
