@@ -352,6 +352,7 @@ baredom.impl.Dom = function (qnames, initialRootQName) {
      * @return {number}
      */
     this.insertElement = function (qname, parent, ref) {
+        assert(qname > 0, "Invalide QName.");
         var pos = createEmptyNode(qname, parent, ref);
         nodes[pos + ATTS] = atts.addEmptyAttributes();
         return pos;

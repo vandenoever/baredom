@@ -13,7 +13,7 @@
 baredom.impl.w3c.Element = function Element(nodeid, owner, namespaceURI, localName) {
     "use strict";
     baredom.impl.w3c.Node.call(this, nodeid, 1, owner, namespaceURI, localName);
-    Object.seal(this);
+    Object_seal(this);
 };
 baredom.impl.w3c.Element.prototype = Object.create(baredom.impl.w3c.Node.prototype, {
 });
@@ -35,5 +35,5 @@ baredom.impl.w3c.Element.prototype.setAttributeNS = function (namespaceURI, qual
  * @param {boolean=} useCapture
  */
 baredom.impl.w3c.Element.prototype.addEventListener = function (type, listener, useCapture) {"use strict"; };
-Object.freeze(baredom.impl.w3c.Element);
-Object.freeze(baredom.impl.w3c.Element.prototype);
+Object_freeze(baredom.impl.w3c.Element);
+Object_freeze(baredom.impl.w3c.Element.prototype);

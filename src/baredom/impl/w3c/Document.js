@@ -131,6 +131,22 @@ baredom.impl.w3c.Document.prototype.impl_getText = function (node) {
     return /**@type{string}*/(n);
 };
 /**
+ * @param {!baredom.impl.w3c.Node} node
+ * @param {string} value
+ */
+baredom.impl.w3c.Document.prototype.impl_setText = function (node, value) {
+    "use strict";
+    if (node.nodeType !== 3) {
+        throw "Cannot set text on this node.";
+    }
+    var nodeid = node.impl_nodeid;
+    if (nodeid === 0) {
+        this.impl_nodeValue = value;
+    } else {
+        this.impl_dom.setText(nodeid, value);
+    }
+};
+/**
  * @param {number} node
  * @return {baredom.impl.w3c.Node}
  */
@@ -162,5 +178,5 @@ baredom.impl.w3c.Document.prototype.impl_getNode = function (node) {
  * @type {!baredom.core.Dom}
  */
 baredom.impl.w3c.Document.prototype.impl_dom;
-Object.freeze(baredom.impl.w3c.Document);
-Object.freeze(baredom.impl.w3c.Document.prototype);
+Object_freeze(baredom.impl.w3c.Document);
+Object_freeze(baredom.impl.w3c.Document.prototype);

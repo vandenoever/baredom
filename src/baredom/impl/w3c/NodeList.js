@@ -17,5 +17,5 @@ baredom.impl.w3c.NodeList.prototype = {
         return null;
     }
 };
-Object.freeze(baredom.impl.w3c.NodeList);
-Object.freeze(baredom.impl.w3c.NodeList.prototype);
+Object_freeze(baredom.impl.w3c.NodeList);
+Object_freeze(baredom.impl.w3c.NodeList.prototype);

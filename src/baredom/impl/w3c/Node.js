@@ -19,13 +19,14 @@ baredom.impl.w3c.Node = function Node(nodeid, nodeType, owner, namespaceURI, loc
         impl_lastChild: { writable: true},
         impl_previousSibling: { writable: true},
         impl_nextSibling: { writable: true},
+        impl_parentNode: { writable: true},
         impl_nodeValue: { writable: true},
         nodeType: { value: nodeType},
         ownerDocument: { value: owner },
         namespaceURI: { value: namespaceURI},
         localName: { value: localName}
     });
-    Object.seal(this);
+    Object_seal(this);
 };
 baredom.impl.w3c.Node.prototype = {
     get firstChild() {
@@ -100,6 +101,7 @@ baredom.impl.w3c.Node.prototype = {
         "use strict";
         var n, doc,
             nodeid = this.impl_nodeid;
+console.log("parentNode " + nodeid);
         if (nodeid === 0) {
             n = this.impl_parentNode;
         } else {
@@ -129,7 +131,16 @@ baredom.impl.w3c.Node.prototype = {
     /** @param {string} value */
     set nodeValue(value) {
         "use strict";
-        throw "";
+        return this.ownerDocument.impl_setText(this, value);
+    },
+    get data() {
+        "use strict";
+        return this.ownerDocument.impl_getText(this);
+    },
+    /** @param {string} value */
+    set data(value) {
+        "use strict";
+        return this.ownerDocument.impl_setText(this, value);
     }
 };
 /**
@@ -184,26 +195,34 @@ baredom.impl.w3c.Node.prototype.insertBefore = function (newChild, refChild) {
         child = /**@type{?baredom.impl.w3c.Node}*/(newChild),
         doc = this.ownerDocument,
         dom = doc.impl_dom,
-        id,
+        childid = child.impl_nodeid,
         /**@type{number}*/
         ref = refChild ? implRef.impl_nodeid : 0,
         qname;
-    if (child.nodeType === 1) {
+    if (childid !== 0) {
+        dom.moveNode(childid, this.impl_nodeid, ref);
+    } else if (child.nodeType === 1) {
         qname = dom.getQNames().getQName(child.namespaceURI, child.localName);
-        id = dom.insertElement(qname, this.impl_nodeid, ref);
+        childid = dom.insertElement(qname, this.impl_nodeid, ref);
     } else {
-        id = dom.insertText(/**@type{string}*/(child.impl_nodeValue),
+        childid = dom.insertText(/**@type{string}*/(child.impl_nodeValue),
                 this.impl_nodeid, ref);
     }
-    child.impl_nodeid = id;
-    doc.impl_idToNodeMap[id] = child;
+    child.impl_nodeid = childid;
+    doc.impl_idToNodeMap[childid] = child;
     return child;
 };
 /**
  * @param {Node} oldChild
  * @return {Node}
  */
-baredom.impl.w3c.Node.prototype.removeChild = function (oldChild) {"use strict"; };
+baredom.impl.w3c.Node.prototype.removeChild = function (oldChild) {
+    "use strict";
+    var dom = this.ownerDocument.impl_dom,
+        child = /**@type{?baredom.impl.w3c.Node}*/(oldChild);
+    dom.removeNode(child.impl_nodeid);
+    return oldChild;
+};
 /**
  * @param {Node} newChild
  * @param {Node} oldChild
@@ -246,5 +265,5 @@ baredom.impl.w3c.Node.prototype.impl_parentNode;
  * @type {?string}
  */
 baredom.impl.w3c.Node.prototype.impl_nodeValue;
-Object.freeze(baredom.impl.w3c.Node);
-Object.freeze(baredom.impl.w3c.Node.prototype);
+Object_freeze(baredom.impl.w3c.Node);
+Object_freeze(baredom.impl.w3c.Node.prototype);

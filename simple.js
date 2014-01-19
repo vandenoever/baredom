@@ -1,6 +1,6 @@
 /*global console*/
 function log(msg) {
-//    console.log(msg);
+   //console.log(msg);
 }
 function countSiblings(n) {
     "use strict";
@@ -28,7 +28,7 @@ function print(node, depth) {
     for (i = 0; i < depth; i += 1) {
         s += " ";
     }
-    s += node.localName || node.data;
+    s += node.localName || node.nodeValue;
     log(s);
     i = node.firstChild;
     while (i) {

@@ -11,9 +11,9 @@
 baredom.impl.w3c.Text = function Text(nodeid, owner) {
     "use strict";
     baredom.impl.w3c.Node.call(this, nodeid, 3, owner, null, null);
-    Object.seal(this);
+    Object_seal(this);
 };
 baredom.impl.w3c.Text.prototype = Object.create(baredom.impl.w3c.Node.prototype, {
 });
-Object.freeze(baredom.impl.w3c.Text);
-Object.freeze(baredom.impl.w3c.Text.prototype);
+Object_freeze(baredom.impl.w3c.Text);
+Object_freeze(baredom.impl.w3c.Text.prototype);

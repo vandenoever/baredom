@@ -29,3 +29,19 @@ function assert(value, msg) {
         throw msg;
     }
 }
+/**
+ * @param {!Object} obj
+ */
+function Object_freeze(obj) {
+    "use strict";
+    // freezing is nice for debugging, but slows down the code
+//    Object.freeze(obj);
+}
+/**
+ * @param {!Object} obj
+ */
+function Object_seal(obj) {
+    "use strict";
+    // sealing is nice for debugging, but slows down the code
+//    Object.seal(obj);
+}

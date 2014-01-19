@@ -12,7 +12,7 @@
 baredom.impl.w3c.Attr = function Attr(owner, namespaceURI, localName) {
     "use strict";
     baredom.impl.w3c.Node.call(this, 0, 2, owner, namespaceURI, localName);
-    Object.seal(this);
+    Object_seal(this);
 };
 baredom.impl.w3c.Attr.prototype = Object.create(baredom.impl.w3c.Node.prototype, {
     parentNode: {
@@ -53,5 +53,5 @@ if (baredom.impl.w3c.Attr === undefined) {
     /**@type{string}*/
     baredom.impl.w3c.Attr.prototype.value;
 }
-Object.freeze(baredom.impl.w3c.Attr);
-Object.freeze(baredom.impl.w3c.Attr.prototype);
+Object_freeze(baredom.impl.w3c.Attr);
+Object_freeze(baredom.impl.w3c.Attr.prototype);

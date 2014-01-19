@@ -180,11 +180,13 @@ function baredomSetup(div, loops, change) {
  */
 function w3baredomSetup(div, loops, change) {
     "use strict";
-    var bridge = baredomSetup(div).bridge,
+    var state = baredomSetup(div),
+        bridge = state.bridge,
         doc = new baredom.impl.w3c.Document(bridge.getVirtualDom()),
-        documentElement = doc.documentElement,
-        state = {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
-    baredomInitialize(state);
+        documentElement = doc.documentElement;
+    state = {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
+    domInitialize(state);
+    print(documentElement);
     return state;
 }
 /**
@@ -391,13 +393,13 @@ console.log(root);
     div.appendChild(root);
     body.appendChild(div);
     // debug
-    options.loops = 5;
+    options.loops = 6;
     options.change = 1;
 /*
     //options.triggerInterval = 1000;
 */
     options.renderInterval = 100;
-    load(options.engines[1]);
+    //load(options.engines[1]);
 }
 
 function addRandomTexts(bridge) {
@@ -469,7 +471,7 @@ function init() {
         div = document.createElementNS(document.body.namespaceURI, "div"),
         bridge = new baredom.impl.DomBridge(vdom, div);
     initVDom(vdom);
-    bridge.render();
+    //bridge.render();
     document.body.appendChild(div);
     // addRandomTexts(bridge);
 
