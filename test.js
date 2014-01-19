@@ -186,7 +186,6 @@ function w3baredomSetup(div, loops, change) {
         documentElement = doc.documentElement;
     state = {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
     domInitialize(state);
-    print(documentElement);
     return state;
 }
 /**
@@ -234,6 +233,7 @@ function dummySetup(div, loops, change) {
     root.createElementNS = function () { return root; };
     root.removeChild = function () {};
     root.insertBefore = function () {};
+    root.appendChild = function () {};
     root.parentNode = root;
     root.ownerDocument = root || div;
     return {root: root, loops: loops, change: change, nodes: []};
@@ -465,15 +465,8 @@ function textTest() {
 function init() {
     "use strict";
 //    textTest();
-    var qnames = new baredom.impl.QName(),
-        qname = qnames.getQName(document.body.namespaceURI, "div"),
-        vdom = new baredom.impl.Dom(qnames, qname),
-        div = document.createElementNS(document.body.namespaceURI, "div"),
-        bridge = new baredom.impl.DomBridge(vdom, div);
-    initVDom(vdom);
-    //bridge.render();
+    var div = document.createElementNS(document.body.namespaceURI, "div");
     document.body.appendChild(div);
-    // addRandomTexts(bridge);
 
     setupForm(div, {
         engines: [{

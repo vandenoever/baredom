@@ -101,7 +101,6 @@ baredom.impl.w3c.Node.prototype = {
         "use strict";
         var n, doc,
             nodeid = this.impl_nodeid;
-console.log("parentNode " + nodeid);
         if (nodeid === 0) {
             n = this.impl_parentNode;
         } else {
