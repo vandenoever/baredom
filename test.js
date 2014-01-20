@@ -16,6 +16,11 @@ triggerinterval: ms between trigger calls
 renderinterval: if applicable, this 
 **/
 
+function getTime() {
+    "use strict";
+    return new Date().getTime();
+}
+
 function addNode(doc, ns, nodes, max, root, pos) {
     "use strict";
     var r, j, n, m;
@@ -50,9 +55,9 @@ function domInitialize(state) {
         ns = root.namespaceURI,
         doc = root.ownerDocument,
         nodes = state.nodes,
-        loops = state.loops,
+        nodeCount = state.nodeCount,
         i;
-    for (i = 0; i < loops; i += 1) {
+    for (i = 0; i < nodeCount; i += 1) {
         addNode(doc, ns, nodes, i, root, i);
     }
 }
@@ -95,115 +100,121 @@ function baredomInitialize(state) {
         nodes = state.nodes,
         divQName = state.divQName,
         spanQName = state.spanQName,
-        loops = state.loops,
+        nodeCount = state.nodeCount,
         i;
-    for (i = 0; i < loops; i += 1) {
-        addBareNode(vdom, divQName, spanQName, nodes, loops, root);
+    for (i = 0; i < nodeCount; i += 1) {
+        addBareNode(vdom, divQName, spanQName, nodes, nodeCount, root);
     }
 }
-function baredomTrigger(state) {
+function baredomTrigger(state, timeLeft) {
     "use strict";
     var vdom = state.bridge.getVirtualDom(),
         root = vdom.getDocumentElement(),
         nodes = state.nodes,
         divQName = state.divQName,
         spanQName = state.spanQName,
-        loops = state.loops,
-        change = Math.round(loops * state.change / 100) || 1,
-        i;
-    for (i = 0; i < change; i += 1) {
-        addBareNode(vdom, divQName, spanQName, nodes, loops, root);
+        nodeCount = state.nodeCount,
+        end = getTime() + timeLeft,
+        count = 0;
+    while (getTime() < end) {
+        addBareNode(vdom, divQName, spanQName, nodes, nodeCount, root);
+        count += 1;
     }
+    return count;
 }
-function domTrigger(state) {
+function domTrigger(state, timeLeft) {
     "use strict";
     var root = state.root,
         ns = root.namespaceURI,
         doc = root.ownerDocument,
         nodes = state.nodes,
-        loops = state.loops,
-        change = Math.round(loops * state.change / 100) || 1,
-        i;
-    for (i = 0; i < change; i += 1) {
-        addNode(doc, ns, nodes, loops, root);
+        nodeCount = state.nodeCount,
+        end = getTime() + timeLeft,
+        count = 0;
+    while (getTime() < end) {
+        addNode(doc, ns, nodes, nodeCount, root);
+        count += 1;
     }
+    return count;
 }
-function detachedDomTrigger(state) {
+function detachedDomTrigger(state, timeLeft) {
     "use strict";
     var root = state.root,
         parent = root.parentNode,
-        next = root.nextSibling;
+        next = root.nextSibling,
+        count;
     parent.removeChild(root);
-    domTrigger(state);
+    count = domTrigger(state, timeLeft);
     parent.insertBefore(root, next);
+    return count;
 }
 // trigger for modifying the bare dom
 /**
  * @param {!Element} div
  */
-function baredomSetup(div, loops, change) {
+function baredomSetup(div, nodeCount) {
     "use strict";
     var qnames = new baredom.impl.QName(),
         divQName = qnames.getQName(document.body.namespaceURI, "div"),
         spanQName = qnames.getQName(document.body.namespaceURI, "span"),
         vdom = new baredom.impl.Dom(qnames, divQName),
         bridge = new baredom.impl.DomBridge(vdom, div),
-        state = {bridge: bridge, nodes: [], divQName: divQName, spanQName: spanQName, loops: loops, change: change};
+        state = {bridge: bridge, nodes: [], divQName: divQName, spanQName: spanQName, nodeCount: nodeCount};
     baredomInitialize(state);
     return state;
 }
 /**
  * @param {!Element} div
  */
-function w3baredomSetup(div, loops, change) {
+function w3baredomSetup(div, nodeCount) {
     "use strict";
     var state = baredomSetup(div),
         bridge = state.bridge,
         doc = new baredom.impl.w3c.Document(bridge.getVirtualDom()),
         documentElement = doc.documentElement;
-    state = {bridge: bridge, root: documentElement, loops: loops, change: change, nodes: []};
+    state = {bridge: bridge, root: documentElement, nodeCount: nodeCount, nodes: []};
     domInitialize(state);
     return state;
 }
 /**
  * @param {!Element} div
  */
-function domSetup(div, loops, change) {
+function domSetup(div, nodeCount) {
     "use strict";
-    var state = {root: div, loops: loops, change: change, nodes: []};
+    var state = {root: div, nodeCount: nodeCount, nodes: []};
     domInitialize(state);
     return state;
 }
 /**
  * @param {!Element} div
  */
-function cloneSetup(div, loops, change) {
+function cloneSetup(div, nodeCount) {
     "use strict";
-    var state = {root: div.cloneNode(true), loops: loops, change: change, nodes: [], live: div};
+    var state = {root: div.cloneNode(true), nodeCount: nodeCount, nodes: [], live: div};
     domInitialize(state);
     return state;
 }
 /**
  * @param {!Element} div
  */
-function importSetup(div, loops, change) {
+function importSetup(div, nodeCount) {
     "use strict";
     var ns = div.namespaceURI,
         doc = div.ownerDocument.implementation.createDocument(ns, "", div.ownerDocument.docType),
         root = doc.createElementNS(div.namespaceURI, div.localName),
-        state = {root: root, loops: loops, change: change, nodes: [], live: div};
+        state = {root: root, nodeCount: nodeCount, nodes: [], live: div};
     domInitialize(state);
     return state;
 }
-function simpleSetup(div, loops, change) {
+function simpleSetup(div, nodeCount) {
     "use strict";
     var root = new Simple(div.namespaceURI, div.localName),
         bridge = new SimpleBridge(root.documentElement, div),
-        state = {bridge: bridge, root: root.documentElement, loops: loops, change: change, nodes: []};
+        state = {bridge: bridge, root: root.documentElement, nodeCount: nodeCount, nodes: []};
     domInitialize(state);
     return state;
 }
-function dummySetup(div, loops, change) {
+function dummySetup(div, nodeCount) {
     "use strict";
     var root = {};
     root.createTextNode = function () { return root; };
@@ -213,7 +224,7 @@ function dummySetup(div, loops, change) {
     root.appendChild = function () {};
     root.parentNode = root;
     root.ownerDocument = root || div;
-    return {root: root, loops: loops, change: change, nodes: []};
+    return {root: root, nodeCount: nodeCount, nodes: []};
 }
 function baredomRender(state) {
     "use strict";
@@ -242,58 +253,58 @@ function simpleRender(state) {
 function setupForm(body, options) {
     "use strict";
     var div = document.createElement("div"),
-        runStart,
-        triggerCalls,
-        triggerCallDuration,
-        renderCalls,
-        renderCallDuration,
+        runStartTime,
+        lastRenderDuration,
+        totalModificationDuration,
+        totalRenderDuration,
+        domModificationCount,
         root = document.createElement("div"),
         engineObject,
         engine,
-        triggerInterval,
         renderInterval,
-        animationFrame,
         stopped = true,
         infoDiv = document.createElement("div");
-    options.loops = options.loops || 5000;
-    options.change = options.change || 10;
+    options.nodeCount = options.nodeCount || 5000;
     infoDiv.appendChild(document.createTextNode(""));
     function updateInfo() {
-        var duration = new Date().getTime() - runStart;
-        infoDiv.firstChild.data = "nodes: " + options.loops + ", % change: "
-            + options.change + ", trigger: "
-            + Math.round(triggerCallDuration / triggerCalls) + " ms, render: "
-            + Math.round(renderCallDuration / renderCalls) + " ms, "
-            + Math.round(100 * (triggerCallDuration + renderCallDuration) / duration) + "% cpu, "
-            + Math.round(triggerCalls * 1000 / duration) + " triggers per second, "
-            + Math.round(renderCalls * 1000 / duration) + " renders per second.";
+        var duration = getTime() - runStartTime,
+            browserTime = duration - totalRenderDuration - totalModificationDuration;
+        infoDiv.firstChild.data = "nodes: " + options.nodeCount
+            + ", dom changes: "
+            + Math.round(100 * totalModificationDuration / duration)
+            + " % of time, render: "
+            + Math.round(100 * totalRenderDuration / duration)
+            + " % of time, browser: "
+            + Math.round(100 * browserTime / duration) + " % of time, "
+            + Math.round(domModificationCount / duration)
+            + "k modifications per second";
     }
     function stop() {
         stopped = true;
-        window.clearInterval(triggerInterval);
         window.clearInterval(renderInterval);
         if (window.cancelAnimationFrame) {
-            window.cancelAnimationFrame(animationFrame);
+            window.cancelAnimationFrame(renderInterval);
         }
-    }
-    function trigger() {
-        var time = new Date().getTime();
-        engine.trigger(engineObject);
-        time = new Date().getTime() - time;
-        triggerCalls += 1;
-        triggerCallDuration += time;
     }
     function render() {
-        var time = new Date().getTime();
+        var time = getTime();
         engine.render(engineObject);
-        time = new Date().getTime() - time;
-        renderCalls += 1;
-        renderCallDuration += time;
+        lastRenderDuration = getTime() - time;
+        totalRenderDuration += lastRenderDuration;
+        //root = div.lastChild;
+    }
+    function trigger() {
+        var timeLeft = options.renderInterval - lastRenderDuration,
+            time = getTime();
+        domModificationCount += engine.trigger(engineObject, timeLeft);
+        totalModificationDuration += getTime() - time;
+        if (options.render) {
+            render();
+        }
         updateInfo();
         if (!options.renderInterval && window.requestAnimationFrame && !stopped) {
-            animationFrame = window.requestAnimationFrame(render);
+            renderInterval = window.requestAnimationFrame(render);
         }
-        root = div.lastChild;
     }
     function restart() {
         stop();
@@ -304,33 +315,29 @@ function setupForm(body, options) {
         while (root.firstChild) {
             root.removeChild(root.firstChild);
         }
-        engineObject = engine.setup(root, options.loops, options.change);
+        engineObject = engine.setup(root, options.nodeCount, options.change);
         render();
-/*
-        if (root.childNodes.length !== options.loops) {
-console.log(root.childNodes.length);
-console.log(root);
-            return stop();
+        runStartTime = getTime();
+        totalModificationDuration = 0;
+        totalRenderDuration = 0;
+        domModificationCount = 0;
+        if (options.render) {
+            render();
         }
-*/
-        runStart = new Date().getTime();
-        triggerCalls = triggerCallDuration = 0;
-        renderCalls = renderCallDuration = 0;
-        triggerInterval = window.setInterval(trigger, options.triggerInterval);
         if (options.renderInterval || !window.requestAnimationFrame) {
-            renderInterval = window.setInterval(render, options.renderInterval);
+            renderInterval = window.setInterval(trigger, options.renderInterval);
         }
     }
     function load(e) {
         engine = e;
         restart();
     }
-    div.appendChild(document.createTextNode("% change per trigger: "));
-    [0, 1, 2, 5, 10, 20, 50, 100].forEach(function (n) {
+    div.appendChild(document.createTextNode("renderInterval (ms): "));
+    [0, 20, 40, 100, 200, 500, 1000].forEach(function (n) {
         var span = document.createElement("span");
         span.appendChild(document.createTextNode(n + " "));
         span.onclick = function () {
-            options.change = n;
+            options.renderInterval = n;
             if (engine) {
                 load(engine);
             }
@@ -338,12 +345,12 @@ console.log(root);
         div.appendChild(span);
     });
     div.appendChild(document.createElement("br"));
-    div.appendChild(document.createTextNode("loops: "));
+    div.appendChild(document.createTextNode("nodes: "));
     [0, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000].forEach(function (n) {
         var span = document.createElement("span");
         span.appendChild(document.createTextNode(n + " "));
         span.onclick = function () {
-            options.loops = n;
+            options.nodeCount = n;
             if (engine) {
                 load(engine);
             }
@@ -370,12 +377,12 @@ console.log(root);
     div.appendChild(root);
     body.appendChild(div);
     // debug
-    options.loops = 6;
-    options.change = 1;
+    options.nodeCount = 6;
 /*
     //options.triggerInterval = 1000;
 */
     options.renderInterval = 100;
+    options.render = true;
     //load(options.engines[1]);
 }
 
