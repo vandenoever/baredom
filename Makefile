@@ -46,7 +46,7 @@ CCOPTS = --warning_level VERBOSE --jscomp_error accessControls --jscomp_error am
 #all: compiled.js compiledtest.js
 
 compiled.js: externs.js $(JS)
-	/usr/bin/java -jar /home/oever/work/webodf/build/ClosureCompiler-prefix/src/ClosureCompiler/compiler.jar \
+	java -jar /home/oever/work/webodf/build/ClosureCompiler-prefix/src/ClosureCompiler/compiler.jar \
     $(CCOPTS) \
 	$(CCJS) \
     --use_only_custom_externs \
