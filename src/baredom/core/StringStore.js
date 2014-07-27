@@ -21,7 +21,7 @@ baredom.core.StringStore.prototype.addStringId = function (stringId) {"use stric
  * This returns a new id for the new string.
  * The code is equivalent to
  *   store.removeString(stringId);
- *   stringId = store.addString(stringId, string);
+ *   stringId = store.addString(string);
  *
  * @param {number} stringId
  * @param {string} string

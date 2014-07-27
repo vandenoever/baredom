@@ -1,6 +1,7 @@
 /*global baredom, assert, ModificationListener, ArrayBuffer, Int32Array*/
 /**
  * @constructor
+ * @implements baredom.core.Dom
  * @implements baredom.core.ObservableDom
  * @param {!baredom.core.QName} qnames
  * @param {number} initialRootQName
